@@ -72,8 +72,8 @@ end
 -- either from cache or by loading from disk
 local function keycloak_config()
     -- TODO: cache keycloak.json
-    local json = keycloak_load_config()
-    return json
+    local config = keycloak_load_config()
+    return config
 end
 
 function keycloak.openidc_opts(opts)
