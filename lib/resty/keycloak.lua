@@ -55,11 +55,7 @@ local keycloak = {
     _VERSION = "0.0.1"
 }
 
-function keycloak.authenticate(opts)
-    local opts = opts or {}
-    local res, err, target_url, session = openidc.authenticate(keycloak.openidc_opts(opts))
 
-    return res, err, target_url, session
 end
 
 local function keycloak_load_config(config_path)
@@ -260,4 +256,13 @@ local keycloak_openidc_defaults = {
     client_id     = keycloak_config()["resource"],
     client_secret = keycloak_config()["credentials"]["secret"]
 }
+
+function keycloak.authenticate(opts)
+    local opts = opts or {}
+    opts = keycloak_merge(opts, keycloak_openidc_defaults)
+    local res, err, target_url, session = openidc.authenticate(opts)
+
+    return res, err, target_url, session
+end
+
 return keycloak
