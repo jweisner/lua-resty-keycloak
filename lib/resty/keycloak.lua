@@ -17,8 +17,11 @@ local DEBUG = ngx.DEBUG
 local ERROR = ngx.ERR
 local WARN = ngx.WARN
 
-local keycloak = {
-    _VERSION = "0.0.1"
+local keycloak_caches = {
+    "keycloak_config",
+    "keycloak_discovery"
+    -- add any other caches we use here
+    -- this is used by keycloak.invalidate_caches()
 }
 
 local function keycloak_openid_discovery_url()
@@ -28,6 +31,10 @@ local function keycloak_openid_discovery_url()
     if string.sub(auth_server_url, -1) ~= '/' then
         auth_server_url = auth_server_url..'/'
     end
+local keycloak_realm_discovery_endpoints = {
+    openid = ".well-known/openid-configuration",
+    uma2   = ".well-known/uma2-configuration"
+}
 
     return auth_server_url .. "realms/".. keycloak.config()["realm"] .. "/.well-known/openid-configuration"
 end
@@ -43,6 +50,9 @@ function keycloak.dumpTable(table)
         end
     end
 end
+local keycloak = {
+    _VERSION = "0.0.1"
+}
 
 function keycloak.authenticate(opts)
     local opts = opts or {}
@@ -242,4 +252,11 @@ function keycloak.get_enforcement(access_token)
 end
 
 keycloak.__index = keycloak
+
+local keycloak_openidc_defaults = {
+    redirect_uri  = "/callback",
+    discovery     = keycloak_discovery_url("openid"),
+    client_id     = keycloak_config()["resource"],
+    client_secret = keycloak_config()["credentials"]["secret"]
+}
 return keycloak
