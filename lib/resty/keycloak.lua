@@ -133,13 +133,6 @@ local function keycloak_discovery(endpoint_type)
     end
 end
 
--- function keycloak.enforce(uri, scope)
---     scope = scope or "view"
---     local body = {}
---     local headers = {}
---     body.__index = body-- this needs to come from somewhere
--- end
-
 -- this function is adapted from openidc.call_token_endpoint()
 local function keycloak_call_endpoint(endpoint_type, endpoint_name, headers, body, method)
     local endpoint_type = endpoint_type or "openid"
