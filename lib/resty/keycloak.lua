@@ -121,7 +121,6 @@ local function keycloak_cache_get(type, key)
     return value
 end
 
--- This function is copied from resty.openidc
 -- invalidate all server-wide caches
 function keycloak.invalidate_caches()
     for i,cache in ipairs(keycloak_caches) do
