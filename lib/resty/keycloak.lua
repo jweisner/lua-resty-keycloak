@@ -119,9 +119,9 @@ end
 -- This function is copied from resty.openidc
 -- invalidate all server-wide caches
 function keycloak.invalidate_caches()
-    keycloak_cache_invalidate("keycloak_config")
-    keycloak_cache_invalidate("discovery") -- this invalidates openidc's cache
-    -- add any other caches we use here
+    for i,cache in ipairs(keycloak_caches) do
+        keycloak_cache_invalidate(cache)
+    end
 end
 
 -- This function is copied from resty.openidc
