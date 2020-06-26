@@ -252,7 +252,7 @@ function keycloak.authenticate(opts)
     return res, err, target_url, session
 end
 
-function keycloak.get_enforcement(access_token)
+function keycloak.test_enforcement(access_token)
     local endpoint_name = "token_endpoint"
     local endpoint_type = "uma2"
     local config = keycloak_config()
