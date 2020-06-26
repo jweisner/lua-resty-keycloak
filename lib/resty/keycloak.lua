@@ -87,18 +87,6 @@ local function keycloak_discovery_url(endpoint)
     return keycloak_realm_url()  .."/".. keycloak_realm_discovery_endpoints["openid"]
 end
 
-function keycloak.dumpTable(table, depth)
-    local depth = depth or 0
-    for k,v in pairs(table) do
-        if (type(v) == "table") then
-            ngx.say(string.rep("  ", depth)..k..":")
-            keycloak.dumpTable(v, depth+1)
-        else
-            ngx.say(string.rep("  ", depth)..k..": ",v)
-        end
-    end
-end
-
 -- This function is copied from resty.openidc
 -- set value in server-wide cache if available
 local function keycloak_cache_set(type, key, value, exp)
@@ -121,13 +109,6 @@ local function keycloak_cache_get(type, key)
     return value
 end
 
--- invalidate all server-wide caches
-function keycloak.invalidate_caches()
-    for i,cache in ipairs(keycloak_caches) do
-        keycloak_cache_invalidate(cache)
-    end
-end
-
 -- This function is copied from resty.openidc
 -- invalidate values of server-wide cache
 local function keycloak_cache_invalidate(type)
@@ -137,28 +118,6 @@ local function keycloak_cache_invalidate(type)
         dict.flush_all(dict)
         local nbr = dict.flush_expired(dict)
     end
-end
-
-function keycloak.get_discovery_doc(endpoint_type)
-    local endpoint_type = endpoint_type or "openid"
-
-    local httpc = http.new()
-    local discovery_url = keycloak_realm_url().."/"..keycloak_realm_discovery_endpoints[endpoint_type]
-
-    local httpc_params = {
-        method = "GET",
-        keepalive = false
-    }
-
-    local res,err = httpc:request_uri(discovery_url, httpc_params)
-    if err then
-        ngx.status = 500
-        log(ERROR, "Error fetching "..endpoint_type.." discovery at "..discovery_url.." : "..err)
-        ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
-    end
-
-        -- TODO: check for json decode errors
-        return cjson_s.decode(res.body), err
 end
 
 local function keycloak_discovery(endpoint_type)
@@ -234,6 +193,38 @@ local function keycloak_call_endpoint(endpoint_type, endpoint_name, headers, bod
     return cjson_s.decode(res.body), err
 end
 
+local keycloak_openidc_defaults = {
+    redirect_uri  = "/callback",
+    discovery     = keycloak_discovery_url("openid"),
+    client_id     = keycloak_config()["resource"],
+    client_secret = keycloak_config()["credentials"]["secret"]
+}
+
+-----------
+-- Public Functions
+
+function keycloak.get_discovery_doc(endpoint_type)
+    local endpoint_type = endpoint_type or "openid"
+
+    local httpc = http.new()
+    local discovery_url = keycloak_realm_url().."/"..keycloak_realm_discovery_endpoints[endpoint_type]
+
+    local httpc_params = {
+        method = "GET",
+        keepalive = false
+    }
+
+    local res,err = httpc:request_uri(discovery_url, httpc_params)
+    if err then
+        ngx.status = 500
+        log(ERROR, "Error fetching "..endpoint_type.." discovery at "..discovery_url.." : "..err)
+        ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
+    end
+
+        -- TODO: check for json decode errors
+        return cjson_s.decode(res.body), err
+end
+
 function keycloak.service_account_token()
     local endpoint_name = "token_endpoint"
     local endpoint_type = "openid"
@@ -246,6 +237,26 @@ function keycloak.service_account_token()
     local res, err = keycloak_call_endpoint(endpoint_type, endpoint_name, {}, body)
 
     return res.access_token
+end
+
+function keycloak.dumpTable(table, depth)
+    local depth = depth or 0
+    for k,v in pairs(table) do
+        if (type(v) == "table") then
+            ngx.say(string.rep("  ", depth)..k..":")
+            keycloak.dumpTable(v, depth+1)
+        else
+            ngx.say(string.rep("  ", depth)..k..": ",v)
+        end
+    end
+end
+
+function keycloak.authenticate(opts)
+    local opts = opts or {}
+    opts = keycloak_merge(opts, keycloak_openidc_defaults)
+    local res, err, target_url, session = openidc.authenticate(opts)
+
+    return res, err, target_url, session
 end
 
 function keycloak.get_enforcement(access_token)
@@ -266,22 +277,12 @@ function keycloak.get_enforcement(access_token)
     local res, err = keycloak_call_endpoint(endpoint_type, endpoint_name, headers, body)
     return res, err
 end
-
-keycloak.__index = keycloak
-
-local keycloak_openidc_defaults = {
-    redirect_uri  = "/callback",
-    discovery     = keycloak_discovery_url("openid"),
-    client_id     = keycloak_config()["resource"],
-    client_secret = keycloak_config()["credentials"]["secret"]
-}
-
-function keycloak.authenticate(opts)
-    local opts = opts or {}
-    opts = keycloak_merge(opts, keycloak_openidc_defaults)
-    local res, err, target_url, session = openidc.authenticate(opts)
-
-    return res, err, target_url, session
+-- invalidate all server-wide caches
+function keycloak.invalidate_caches()
+    for i,cache in ipairs(keycloak_caches) do
+        keycloak_cache_invalidate(cache)
+    end
 end
 
+keycloak.__index = keycloak
 return keycloak
