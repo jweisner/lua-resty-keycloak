@@ -55,7 +55,15 @@ local keycloak = {
     _VERSION = "0.0.1"
 }
 
+-- merge tables. Table "one" has priority
+-- eg. keycloak_merge(config, defaults)
+local function keycloak_merge(one, two)
+    local one = one or {}
+    local two = two or {}
+    -- merge opts
+    for k, v in pairs(one) do two[k] = v end
 
+    return two
 end
 
 local function keycloak_load_config(config_path)
