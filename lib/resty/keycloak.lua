@@ -24,20 +24,11 @@ local keycloak_caches = {
     -- this is used by keycloak.invalidate_caches()
 }
 
-local function keycloak_openid_discovery_url()
-    local config = keycloak.config()
-    local auth_server_url = keycloak.config()["auth-server-url"]
-    -- make sure the auth server url ends in /
-    if string.sub(auth_server_url, -1) ~= '/' then
-        auth_server_url = auth_server_url..'/'
-    end
 local keycloak_realm_discovery_endpoints = {
     openid = ".well-known/openid-configuration",
     uma2   = ".well-known/uma2-configuration"
 }
 
-    return auth_server_url .. "realms/".. keycloak.config()["realm"] .. "/.well-known/openid-configuration"
-end
 -- keycloak_openidc_defaults -- populated at the bottom of this script
 
 local keycloak = {
@@ -91,7 +82,6 @@ function keycloak.openidc_opts(opts)
     }
 
 
-    return opts
 function keycloak.dumpTable(table, depth)
     local depth = depth or 0
     for k,v in pairs(table) do
