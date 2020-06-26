@@ -214,6 +214,7 @@ local function keycloak_call_endpoint(endpoint_name, headers, body, method)
         ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
     end
 
+    -- TODO: check for json decode errors
     return cjson_s.decode(res.body), err
 end
 
