@@ -93,6 +93,7 @@ function keycloak.dumpTable(table, depth)
         end
     end
 end
+
 -- This function is copied from resty.openidc
 -- set value in server-wide cache if available
 local function keycloak_cache_set(type, key, value, exp)
