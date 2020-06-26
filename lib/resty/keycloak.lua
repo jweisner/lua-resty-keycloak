@@ -277,13 +277,6 @@ local keycloak_openidc_defaults = {
     client_secret = keycloak_config()["credentials"]["secret"]
 }
 
-keycloak_openidc_defaults = {
-        redirect_uri  = "/callback",
-        discovery     = keycloak_discovery_url("openid"),
-        client_id     = keycloak_config()["resource"],
-        client_secret = keycloak_config()["credentials"]["secret"]
-}
-
 function keycloak.authenticate(opts)
     local opts = opts or {}
     opts = keycloak_merge(opts, keycloak_openidc_defaults)
