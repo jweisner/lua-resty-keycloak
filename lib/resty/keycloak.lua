@@ -70,7 +70,7 @@ end
 
 -- Returns the keycloak.json data as a Lua table
 -- either from cache or by loading from disk
-function keycloak.config()
+local function keycloak_config()
     -- TODO: cache keycloak.json
     local json = keycloak_load_config()
     return json
