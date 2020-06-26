@@ -71,15 +71,6 @@ local function keycloak_config()
     return config
 end
 
-function keycloak.openidc_opts(opts)
-    local opts = opts or {}
-    local config = keycloak.config()
-    local defaults = {
-        redirect_uri = "/callback",
-        discovery = keycloak_openid_discovery_url(),
-        client_id = config.resource,
-        client_secret = config.credentials.secret
-    }
 local function keycloak_realm_url()
     local config = keycloak_config()
     local auth_server_url = keycloak_config()["auth-server-url"]
@@ -221,7 +212,6 @@ local function keycloak_call_endpoint(endpoint_type, endpoint_name, headers, bod
         end
     end
 
-    local httpc = http.new()
     -- TODO: timeouts
     -- TODO: proxy
 
