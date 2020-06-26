@@ -90,8 +90,6 @@ function keycloak.openidc_opts(opts)
         client_secret = config.credentials.secret
     }
 
-    -- merge opts
-    for k, v in pairs(defaults) do opts[k] = v end
 
     return opts
 function keycloak.dumpTable(table, depth)
