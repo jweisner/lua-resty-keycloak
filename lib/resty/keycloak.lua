@@ -40,17 +40,6 @@ local keycloak_realm_discovery_endpoints = {
 end
 -- keycloak_openidc_defaults -- populated at the bottom of this script
 
-function keycloak.dumpTable(table)
-    local depth = 20
-    for k,v in pairs(table) do
-        if (type(v) == "table") then
-            ngx.say(string.rep("  ", depth)..k..":")
-            keycloak.dumpTable(v, depth+1)
-        else
-            ngx.say(string.rep("  ", depth)..k..": ",v)
-        end
-    end
-end
 local keycloak = {
     _VERSION = "0.0.1"
 }
@@ -105,6 +94,16 @@ function keycloak.openidc_opts(opts)
     for k, v in pairs(defaults) do opts[k] = v end
 
     return opts
+function keycloak.dumpTable(table, depth)
+    local depth = depth or 0
+    for k,v in pairs(table) do
+        if (type(v) == "table") then
+            ngx.say(string.rep("  ", depth)..k..":")
+            keycloak.dumpTable(v, depth+1)
+        else
+            ngx.say(string.rep("  ", depth)..k..": ",v)
+        end
+    end
 end
 -- This function is copied from resty.openidc
 -- set value in server-wide cache if available
