@@ -149,16 +149,31 @@ local function keycloak_cache_invalidate(type)
     end
 end
 
-function keycloak.get_discovery_doc()
-    local openidc_opts = { }
-    openidc_opts["discovery"] = keycloak_discovery_url()
-    local discovery, err = openidc.get_discovery_doc(openidc_opts)
-    return discovery, err
+function keycloak.get_discovery_doc(endpoint_type)
+    local endpoint_type = endpoint_type or "openid"
+
+    local httpc = http.new()
+    local discovery_url = keycloak_realm_url().."/"..keycloak_realm_discovery_endpoints[endpoint_type]
+
+    local httpc_params = {
+        method = "GET",
+        keepalive = false
+    }
+
+    local res,err = httpc:request_uri(discovery_url, httpc_params)
+    if err then
+        ngx.status = 500
+        log(ERROR, "Error fetching "..endpoint_type.." discovery at "..discovery_url.." : "..err)
+        ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
+    end
+
+        -- TODO: check for json decode errors
+        return cjson_s.decode(res.body), err
 end
 
-function keycloak.discovery()
+local function keycloak_discovery(endpoint_type)
     -- TODO: use openidc discovery cache
-    local discovery, err = keycloak.get_discovery_doc()
+    local discovery, err = keycloak.get_discovery_doc(endpoint_type)
 
     if err then
         ngx.status = 500
@@ -177,14 +192,16 @@ end
 -- end
 
 -- this function is adapted from openidc.call_token_endpoint()
-local function keycloak_call_endpoint(endpoint_name, headers, body, method)
+local function keycloak_call_endpoint(endpoint_type, endpoint_name, headers, body, method)
+    local endpoint_type = endpoint_type or "openid"
     local endpoint_name = endpoint_name or "token_endpoint"
     local headers = headers or {}
     local body = body or {}
     local method = method or "POST"
 
-    local discovery = keycloak.discovery()
-    local config = keycloak.config()
+    local discovery = keycloak_discovery(endpoint_type)
+    local config = keycloak_config()
+    local httpc = http.new()
 
     -- TODO: check that we have an endpoint for this
     local endpoint_url = discovery[endpoint_name]
@@ -230,20 +247,22 @@ end
 
 function keycloak.service_account_token()
     local endpoint_name = "token_endpoint"
-    local config = keycloak.config()
+    local endpoint_type = "openid"
+    local config = keycloak_config()
 
     local body = {
         grant_type = "client_credentials"
     }
 
-    local res, err = keycloak_call_endpoint(endpoint_name, {}, body)
+    local res, err = keycloak_call_endpoint(endpoint_type, endpoint_name, {}, body)
 
     return res.access_token
 end
 
 function keycloak.get_enforcement(access_token)
     local endpoint_name = "token_endpoint"
-    local config = keycloak.config()
+    local endpoint_type = "uma2"
+    local config = keycloak_config()
     -- TODO: error if access_token nil
     local headers = {
         ["Authorization"] = "Bearer " .. access_token
@@ -255,7 +274,7 @@ function keycloak.get_enforcement(access_token)
         response_mode = "decision"
     }
 
-    local res, err = keycloak_call_endpoint(endpoint_name, headers, body)
+    local res, err = keycloak_call_endpoint(endpoint_type, endpoint_name, headers, body)
     return res, err
 end
 
