@@ -80,7 +80,21 @@ function keycloak.openidc_opts(opts)
         client_id = config.resource,
         client_secret = config.credentials.secret
     }
+local function keycloak_realm_url()
+    local config = keycloak_config()
+    local auth_server_url = keycloak_config()["auth-server-url"]
+    -- make sure the auth server url ends in /
+    if string.sub(auth_server_url, -1) ~= '/' then
+        auth_server_url = auth_server_url..'/'
+    end
+    return auth_server_url .. "realms/".. keycloak_config()["realm"]
+end
 
+local function keycloak_discovery_url(endpoint)
+    local endpoint = endpoint or openid
+    -- TODO: check that we have a configured endpoint url
+    return keycloak_realm_url()  .."/".. keycloak_realm_discovery_endpoints["openid"]
+end
 
 function keycloak.dumpTable(table, depth)
     local depth = depth or 0
