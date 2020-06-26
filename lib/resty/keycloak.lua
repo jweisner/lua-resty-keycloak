@@ -38,6 +38,7 @@ local keycloak_realm_discovery_endpoints = {
 
     return auth_server_url .. "realms/".. keycloak.config()["realm"] .. "/.well-known/openid-configuration"
 end
+-- keycloak_openidc_defaults -- populated at the bottom of this script
 
 function keycloak.dumpTable(table)
     local depth = 20
