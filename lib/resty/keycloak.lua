@@ -252,7 +252,7 @@ function keycloak.authenticate(opts)
     return res, err, target_url, session
 end
 
-function keycloak.test_enforcement(access_token)
+function keycloak.get_enforcement(access_token, resource_id)
     local endpoint_name = "token_endpoint"
     local endpoint_type = "uma2"
     local config = keycloak_config()
@@ -264,6 +264,7 @@ function keycloak.test_enforcement(access_token)
     local body = {
         grant_type = "urn:ietf:params:oauth:grant-type:uma-ticket",
         audience = config.resource,
+        permission = resource_id,
         response_mode = "decision"
     }
 
