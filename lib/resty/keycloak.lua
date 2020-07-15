@@ -29,7 +29,7 @@ local keycloak_realm_discovery_endpoints = {
     uma2   = ".well-known/uma2-configuration"
 }
 
--- keycloak_openidc_defaults -- populated at the bottom of this script
+-- keycloak_openidc_defaults -- populated at the bottom of private functions
 
 local keycloak = {
     _VERSION = "0.0.1"
