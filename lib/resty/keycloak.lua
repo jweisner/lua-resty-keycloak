@@ -261,6 +261,25 @@ local function keycloak_resource(resource_id)
     end
 end
 
+local function keycloak_get_resources()
+    local resource_set = keycloak_resource_set()
+    local resources = {}
+
+    for k,resource_id in ipairs(resource_set) do
+        -- log(ERROR, "DEBUG: calling keycloak_get_resource("..resource_id..")")
+        resources[resource_id] = keycloak_get_resource(resource_id)
+    end
+
+    return resources
+end
+
+local function keycloak_resources()
+    -- TODO: cache
+
+    local resources = keycloak_get_resources()
+    return resources
+end
+
 local keycloak_openidc_defaults = {
     redirect_uri  = "/callback",
     discovery     = keycloak_discovery_url("openid"),
