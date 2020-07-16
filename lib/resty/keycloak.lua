@@ -146,6 +146,12 @@ local function keycloak_call_endpoint(endpoint_type, endpoint_name, headers, bod
     local config = keycloak_config()
     local httpc = http.new()
 
+    local params_string = ''
+
+    for i,param in ipairs(params) do
+        params_string = '/'..param
+    end
+
     -- TODO: check that we have an endpoint for this
     local endpoint_url = discovery[endpoint_name]
 
