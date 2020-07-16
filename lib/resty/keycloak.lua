@@ -341,6 +341,11 @@ function keycloak.authenticate(openidc_opts)
     return res, err, target_url, session
 end
 
+function keycloak.session_token(openidc_opts, session_opts)
+    local opts = keycloak_openidc_opts(openidc_opts)
+    return openidc.access_token(opts, session_opts)
+end
+
 -- invalidate all server-wide caches
 function keycloak.invalidate_caches()
     for i,cache in ipairs(keycloak_caches) do
