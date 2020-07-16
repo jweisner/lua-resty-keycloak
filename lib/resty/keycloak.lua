@@ -134,11 +134,12 @@ local function keycloak_discovery(endpoint_type)
 end
 
 -- this function is adapted from openidc.call_token_endpoint()
-local function keycloak_call_endpoint(endpoint_type, endpoint_name, headers, body, method)
+local function keycloak_call_endpoint(endpoint_type, endpoint_name, headers, body, params, method)
     local endpoint_type = endpoint_type or "openid"
     local endpoint_name = endpoint_name or "token_endpoint"
     local headers = headers or {}
     local body = body or {}
+    local params = params or {}
     local method = method or "POST"
 
     local discovery = keycloak_discovery(endpoint_type)
