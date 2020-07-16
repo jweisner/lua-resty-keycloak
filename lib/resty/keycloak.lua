@@ -207,6 +207,31 @@ local function keycloak_get_decision(access_token, resource_id)
     return res, err
 end
 
+local function keycloak_get_resource_set()
+    local endpoint_type = "uma2"
+    local endpoint_name = "resource_registration_endpoint"
+    local headers = { Authorization = "Bearer " .. keycloak.service_account_token() }
+    local body = {}
+    local method = "GET"
+    local params = {}
+    local resource_set,err = keycloak_call_endpoint(endpoint_type, endpoint_name, headers, body, params, method)
+
+    return resource_set,err
+end
+
+local function resource_set()
+    -- TODO: fetch from cache
+    local resource_set,err = keycloak_get_resource_set()
+    if err then
+        -- TODO should this error out or just deny?
+        ngx.status = 500
+        log(ERROR, "Error getting ressource set: " .. err)
+        ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
+    else
+        return resource_set, nil
+    end
+end
+
 local keycloak_openidc_defaults = {
     redirect_uri  = "/callback",
     discovery     = keycloak_discovery_url("openid"),
