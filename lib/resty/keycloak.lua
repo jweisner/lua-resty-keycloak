@@ -290,6 +290,16 @@ function keycloak.dumpTable(table, depth)
     end
 end
 
+function keycloak.decision()
+    local decision
+    local err
+
+    -- TODO: cache
+    decision,err = keycloak_get_decision()
+    -- TODO: error out here?
+    return decision,err
+end
+
 function keycloak.authenticate(opts)
     local opts = opts or {}
     opts = keycloak_merge(opts, keycloak_openidc_defaults)
