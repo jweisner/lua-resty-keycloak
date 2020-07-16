@@ -121,7 +121,6 @@ local function keycloak_cache_invalidate(type)
 end
 
 local function keycloak_discovery(endpoint_type)
-    -- TODO: use openidc discovery cache
     local discovery, err = keycloak.get_discovery_doc(endpoint_type)
 
     if err then
