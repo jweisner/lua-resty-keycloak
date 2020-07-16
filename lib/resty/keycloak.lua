@@ -270,7 +270,7 @@ local keycloak_openidc_defaults = {
 
 local function keycloak_openidc_opts(openidc_opts)
     local openidc_opts = openidc_opts or {}
-    return keycloak_merge(opts, keycloak_openidc_defaults)
+    return keycloak_merge(openidc_opts, keycloak_openidc_defaults)
 end
 
 -----------
