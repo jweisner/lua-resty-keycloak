@@ -215,8 +215,8 @@ function keycloak.get_discovery_doc(endpoint_type)
         ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
     end
 
-        -- TODO: check for json decode errors
-        return cjson_s.decode(res.body), err
+    -- TODO: check for json decode errors
+    return cjson_s.decode(res.body), err
 end
 
 function keycloak.service_account_token()
