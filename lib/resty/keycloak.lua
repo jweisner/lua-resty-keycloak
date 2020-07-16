@@ -243,7 +243,7 @@ local function keycloak_get_resource(resource_id)
     local body = {}
     local params = { resource_id }
     local method = "GET"
-    local resource_set,err = keycloak_call_endpoint(endpoint_type, endpoint_name, headers, body, params, method)
+    local resource,err = keycloak_call_endpoint(endpoint_type, endpoint_name, headers, body, params, method)
 
     return resource,err
 end
