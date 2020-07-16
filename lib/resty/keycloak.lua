@@ -153,7 +153,7 @@ local function keycloak_call_endpoint(endpoint_type, endpoint_name, headers, bod
     end
 
     -- TODO: check that we have an endpoint for this
-    local endpoint_url = discovery[endpoint_name]
+    local endpoint_url = discovery[endpoint_name]..params_string
 
     -- make sure form content type is set for POST method
     if method == "POST" then
