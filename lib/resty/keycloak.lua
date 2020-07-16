@@ -229,12 +229,11 @@ local function resource_set()
     -- TODO: fetch from cache
     local resource_set,err = keycloak_get_resource_set()
     if err then
-        -- TODO should this error out or just deny?
         ngx.status = 500
         log(ERROR, "Error getting ressource set: " .. err)
         ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
     else
-        return resource_set, nil
+        return resource_set
     end
 end
 
