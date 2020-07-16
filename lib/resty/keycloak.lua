@@ -268,6 +268,11 @@ local keycloak_openidc_defaults = {
     client_secret = keycloak_config()["credentials"]["secret"]
 }
 
+local function keycloak_openidc_opts(openidc_opts)
+    local openidc_opts = openidc_opts or {}
+    return keycloak_merge(opts, keycloak_openidc_defaults)
+end
+
 -----------
 -- Public Functions
 
@@ -329,9 +334,8 @@ function keycloak.decision()
     return decision,err
 end
 
-function keycloak.authenticate(opts)
-    local opts = opts or {}
-    opts = keycloak_merge(opts, keycloak_openidc_defaults)
+function keycloak.authenticate(openidc_opts)
+    local opts = keycloak_openidc_opts(openidc_opts)
     local res, err, target_url, session = openidc.authenticate(opts)
 
     return res, err, target_url, session
