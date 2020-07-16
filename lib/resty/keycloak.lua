@@ -180,6 +180,8 @@ local function keycloak_call_endpoint(endpoint_type, endpoint_name, headers, bod
         keepalive = false
     }
 
+    -- log(ERROR, "DEBUG: keycloak_call_endpoint() endpoint_url: "..endpoint_url)
+
     local res, err = httpc:request_uri(endpoint_url, httpc_params)
 
     if err then
