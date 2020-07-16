@@ -187,6 +187,26 @@ local function keycloak_call_endpoint(endpoint_type, endpoint_name, headers, bod
     return cjson_s.decode(res.body), err
 end
 
+local function keycloak_get_decision(access_token, resource_id)
+    local endpoint_name = "token_endpoint"
+    local endpoint_type = "uma2"
+    local config = keycloak_config()
+    -- TODO: error if access_token nil
+    local headers = {
+        ["Authorization"] = "Bearer " .. access_token
+    }
+
+    local body = {
+        grant_type = "urn:ietf:params:oauth:grant-type:uma-ticket",
+        audience = config.resource,
+        permission = resource_id,
+        response_mode = "decision"
+    }
+
+    local res, err = keycloak_call_endpoint(endpoint_type, endpoint_name, headers, body)
+    return res, err
+end
+
 local keycloak_openidc_defaults = {
     redirect_uri  = "/callback",
     discovery     = keycloak_discovery_url("openid"),
@@ -253,25 +273,6 @@ function keycloak.authenticate(opts)
     return res, err, target_url, session
 end
 
-function keycloak.get_enforcement(access_token, resource_id)
-    local endpoint_name = "token_endpoint"
-    local endpoint_type = "uma2"
-    local config = keycloak_config()
-    -- TODO: error if access_token nil
-    local headers = {
-        ["Authorization"] = "Bearer " .. access_token
-    }
-
-    local body = {
-        grant_type = "urn:ietf:params:oauth:grant-type:uma-ticket",
-        audience = config.resource,
-        permission = resource_id,
-        response_mode = "decision"
-    }
-
-    local res, err = keycloak_call_endpoint(endpoint_type, endpoint_name, headers, body)
-    return res, err
-end
 -- invalidate all server-wide caches
 function keycloak.invalidate_caches()
     for i,cache in ipairs(keycloak_caches) do
