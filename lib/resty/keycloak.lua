@@ -249,8 +249,8 @@ local function keycloak_get_resource(resource_id)
 end
 
 local function keycloak_resource(resource_id)
-    -- TODO: check cache
-
+    -- no cache here because this is only called by keycloak_get_resources(),
+    -- which has its own cache for the full hash
     local resource,err = keycloak_get_resource(resource_id)
     if err then
         ngx.status = 500
