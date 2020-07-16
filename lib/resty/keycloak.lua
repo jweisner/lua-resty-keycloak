@@ -237,6 +237,31 @@ local function keycloak_resource_set()
     end
 end
 
+local function keycloak_get_resource(resource_id)
+    local endpoint_type = "uma2"
+    local endpoint_name = "resource_registration_endpoint"
+    local headers = { Authorization = "Bearer " .. keycloak.service_account_token() }
+    local body = {}
+    local params = { resource_id }
+    local method = "GET"
+    local resource_set,err = keycloak_call_endpoint(endpoint_type, endpoint_name, headers, body, params, method)
+
+    return resource,err
+end
+
+local function keycloak_resource(resource_id)
+    -- TODO: check cache
+
+    local resource,err = keycloak_get_resource(resource_id)
+    if err then
+        ngx.status = 500
+        log(ERROR, "Error getting ressource "..resource_id..": " .. err)
+        ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
+    else
+        return resource
+    end
+end
+
 local keycloak_openidc_defaults = {
     redirect_uri  = "/callback",
     discovery     = keycloak_discovery_url("openid"),
