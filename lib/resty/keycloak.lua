@@ -45,6 +45,25 @@ local function keycloak_merge(one, two)
     return two
 end
 
+-- convert numbered table into a set
+-- https://stackoverflow.com/a/656232
+local function keycloak_table_to_set(list)
+    local set = {}
+    for _,l in ipairs(list) do set[l] = true end
+    return set
+end
+
+-- find a value in a table
+-- https://stackoverflow.com/a/664557
+local function keycloak_table_find(f,subject)
+    for _, v in ipairs(subject) do
+        if f == v then
+            return v
+        end
+    end
+    return nil
+end
+
 local function keycloak_load_config(config_path)
     config_path = config_path or ngx.config.prefix() .. "/conf/keycloak.json"
 
