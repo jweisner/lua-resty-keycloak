@@ -40,7 +40,6 @@ local keycloak = {
 local function keycloak_merge(one, two)
     local one = one or {}
     local two = two or {}
-    -- merge opts
     for k, v in pairs(one) do two[k] = v end
 
     return two
