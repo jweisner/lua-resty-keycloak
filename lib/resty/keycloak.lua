@@ -376,12 +376,12 @@ function keycloak.dumpTable(table, depth)
     end
 end
 
-function keycloak.decision()
+function keycloak.decision(access_token, resource_id)
     local decision
     local err
 
     -- TODO: cache
-    decision,err = keycloak_get_decision()
+    decision,err = keycloak_get_decision(access_token, resource_id)
     -- TODO: error out here?
     return decision,err
 end
