@@ -163,6 +163,15 @@ local function keycloak_discovery(endpoint_type)
     end
 end
 
+local function keycloak_scope_for_method(method)
+    local scope = "extended" -- this scope is returned for unknown HTTP methods (eg. WebDAV)
+    if keycloak_scope_map[method] ~= nil then
+        scope = keycloak_scope_map[method]
+    end
+
+    return scope
+end
+
 -- this function is adapted from openidc.call_token_endpoint()
 local function keycloak_call_endpoint(endpoint_type, endpoint_name, headers, body, params, method)
     local endpoint_type = endpoint_type or "openid"
@@ -323,6 +332,75 @@ local keycloak_openidc_defaults = {
 local function keycloak_openidc_opts(openidc_opts)
     local openidc_opts = openidc_opts or {}
     return keycloak_merge(openidc_opts, keycloak_openidc_defaults)
+end
+
+-- return the match depth or nil if not found
+local function keycloak_uri_path_match(subject, test)
+    if subject == test then
+        return string.len(test)
+    end
+
+    if test == '/' then
+        return 1
+    end
+
+    local s,e = string.find(subject,test)
+    local testlen = string.len(test)
+    if (s == 1) and (e == testlen) and (string.sub(test,-1) == '/') then
+        -- match depth is the whole policy uri and last character of policy uri is slash
+        -- matches directory in policy to a directory path of the request path
+        return e
+    end
+
+    return nil
+end
+
+-- return the resource_id for the deepest match of uris for the given uri
+-- returns nil if none found
+local function keycloak_resourceid_for_request(request_uri,request_method)
+    local request_uri = request_uri or ngx.var.request_uri
+    local request_method = request_method or ngx.req.get_method()
+
+    local keycloak_scope = keycloak_scope_for_method(ngx.req.get_method())
+    local resources = keycloak_resources()
+
+    -- TODO: log debug
+    log(ERROR, "DEBUG: request_method: "..request_method.." keycloak_scope:"..keycloak_scope)
+
+    -- initialize "best match"
+    local found_depth = 0
+    local found = nil -- this will be replaced by the ID of the closest uri match
+
+    for resource_id,resource in pairs(resources) do
+        local next = next -- scope searching speed hack
+        local resource_scopes = resource.resource_scopes
+
+        local resource_scopes_empty = false
+        if next(resource_scopes) == nil then
+            -- TODO: log debug
+            log(ERROR, "DEBUG: Resource: "..resource.name..": scopes empty.")
+            resource_scopes_empty = true
+        end
+
+        local resource_scope_matches = keycloak_table_find(resource_scopes, { name = keycloak_scope }) or nil
+        -- only test the resource URIs if the method matches the resource scope
+        -- or the resource doesn't list any associated scopes
+        if resource_scopes_empty or resource_scope_matches then
+            -- TODO: log debug
+            log(ERROR, "DEBUG: Testing resource: "..resource.name..": matching resource scope or scopes empty.")
+            for i,uri in ipairs(resource.uris) do
+                match_depth = keycloak_uri_path_match(request_uri,uri) or 0
+                if match_depth > found_depth then
+                    found_depth = match_depth
+                    found = resource_id
+                end
+            end
+        else
+            -- TODO: log debug
+            log(ERROR, "DEBUG: Skipping resource: "..resource.name..": no matching resource scope and scopes not empty.")
+        end
+    end
+    return found,found_depth
 end
 
 -----------
