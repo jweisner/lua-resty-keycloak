@@ -35,6 +35,19 @@ local keycloak = {
     _VERSION = "0.0.1"
 }
 
+-- this hash maps HTTP method to Keycloak scope
+local keycloak_scope_map = {
+    GET     = "view",
+    HEAD    = "view",
+    OPTIONS = "view",
+    DELETE  = "write",
+    PATCH   = "write",
+    POST    = "write",
+    PUT     = "write",
+    CONNECT = "debug",
+    TRACE   = "debug"
+}
+
 -- merge tables. Table "one" has priority
 -- eg. keycloak_merge(config, defaults)
 local function keycloak_merge(one, two)
