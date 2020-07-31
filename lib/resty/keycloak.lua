@@ -365,7 +365,7 @@ local function keycloak_resourceid_for_request(request_uri,request_method)
     local resources = keycloak_resources()
 
     -- TODO: log debug
-    log(ERROR, "DEBUG: request_method: "..request_method.." keycloak_scope:"..keycloak_scope)
+    log(ERROR, "DEBUG: request_method: "..request_method.." keycloak_scope:"..keycloak_scope.." resource count: "..#resources)
 
     -- initialize "best match"
     local found_depth = 0
