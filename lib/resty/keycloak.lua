@@ -372,6 +372,9 @@ local function keycloak_resourceid_for_request(request_uri,request_method)
     local found = nil -- this will be replaced by the ID of the closest uri match
 
     for resource_id,resource in pairs(resources) do
+        -- TODO: log debug
+        log(ERROR, "DEBUG: Trying resource: \""..resource.name.."\"")
+
         local next = next -- scope searching speed hack
         local resource_scopes = resource.resource_scopes
 
@@ -383,6 +386,15 @@ local function keycloak_resourceid_for_request(request_uri,request_method)
         end
 
         local resource_scope_matches = keycloak_table_find(resource_scopes, { name = keycloak_scope }) or nil
+
+        if resource_scope_matches then
+            log(ERROR, "DEBUG: Resource: \""..resource.name.."\": found matching scope.")
+            resource_scopes_empty = true
+        else
+            log(ERROR, "DEBUG: Resource: \""..resource.name.."\": no matching scopes.")
+            resource_scopes_empty = true
+        end
+
         -- only test the resource URIs if the method matches the resource scope
         -- or the resource doesn't list any associated scopes
         if resource_scopes_empty or resource_scope_matches then
