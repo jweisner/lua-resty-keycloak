@@ -378,7 +378,7 @@ local function keycloak_resourceid_for_request(request_uri,request_method)
         local resource_scopes_empty = false
         if next(resource_scopes) == nil then
             -- TODO: log debug
-            log(ERROR, "DEBUG: Resource: "..resource.name..": scopes empty.")
+            log(ERROR, "DEBUG: Resource: \""..resource.name.."\": scopes empty.")
             resource_scopes_empty = true
         end
 
@@ -387,7 +387,7 @@ local function keycloak_resourceid_for_request(request_uri,request_method)
         -- or the resource doesn't list any associated scopes
         if resource_scopes_empty or resource_scope_matches then
             -- TODO: log debug
-            log(ERROR, "DEBUG: Testing resource: "..resource.name..": matching resource scope or scopes empty.")
+            log(ERROR, "DEBUG: Testing resource: \""..resource.name.."\": matching resource scope or scopes empty.")
             for i,uri in ipairs(resource.uris) do
                 match_depth = keycloak_uri_path_match(request_uri,uri) or 0
                 if match_depth > found_depth then
@@ -397,7 +397,7 @@ local function keycloak_resourceid_for_request(request_uri,request_method)
             end
         else
             -- TODO: log debug
-            log(ERROR, "DEBUG: Skipping resource: "..resource.name..": no matching resource scope and scopes not empty.")
+            log(ERROR, "DEBUG: Skipping resource: \""..resource.name.."\": no matching resource scope and scopes not empty.")
         end
     end
     return found,found_depth
