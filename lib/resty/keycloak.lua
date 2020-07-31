@@ -355,6 +355,15 @@ local function keycloak_uri_path_match(subject, test)
     return nil
 end
 
+local function keycloak_scopes_to_lookup_table(scope_hash)
+    local lookup_table = {}
+    for i,scope in ipairs(scope_hash) do
+        lookup_table[scope.name] = true
+    end
+
+    return lookup_table
+end
+
 -- return the resource_id for the deepest match of uris for the given uri
 -- returns nil if none found
 local function keycloak_resourceid_for_request(request_uri,request_method)
@@ -376,7 +385,7 @@ local function keycloak_resourceid_for_request(request_uri,request_method)
         log(ERROR, "DEBUG: Trying resource: \""..resource.name.."\"")
 
         local next = next -- scope searching speed hack
-        local resource_scopes = resource.resource_scopes
+        local resource_scopes = keycloak_scopes_to_lookup_table(resource.resource_scopes)
 
         local resource_scopes_empty = false
         if next(resource_scopes) == nil then
@@ -385,7 +394,7 @@ local function keycloak_resourceid_for_request(request_uri,request_method)
             resource_scopes_empty = true
         end
 
-        local resource_scope_matches = keycloak_table_find(resource_scopes, { name = keycloak_scope }) or nil
+        local resource_scope_matches = resource_scopes[keycloak_scope] or false
 
         if resource_scope_matches then
             log(ERROR, "DEBUG: Resource: \""..resource.name.."\": found matching scope.")
