@@ -410,7 +410,7 @@ local function keycloak_resourceid_for_request(request_uri,request_method)
             -- TODO: log debug
             log(ERROR, "DEBUG: Testing resource: \""..resource.name.."\": matching resource scope or scopes empty.")
             for i,uri in ipairs(resource.uris) do
-                match_depth = keycloak_uri_path_match(request_uri,uri) or 0
+                local match_depth = keycloak_uri_path_match(request_uri,uri) or 0
                 if match_depth > found_depth then
                     found_depth = match_depth
                     found = resource_id
