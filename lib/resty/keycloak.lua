@@ -500,5 +500,58 @@ function keycloak.invalidate_caches()
     end
 end
 
+function keycloak.authorize(session_token)
+    -- catch empty access token
+    if session_token == nil then
+        ngx.status = 403
+        log(ERROR, "Session token is nil: access forbidden.")
+        ngx.exit(ngx.HTTP_FORBIDDEN)
+    end
+
+    -- TODO: this is debug
+    log(ERROR, "Matching URI with Keycloak resources")
+    local resource_id = keycloak_resourceid_for_request()
+
+    -- forbidden if no matching resources found
+    if resource_id == nil then
+        ngx.status = 403
+        log(ERROR, "No matching resources: access forbidden.")
+        ngx.exit(ngx.HTTP_FORBIDDEN)
+    end
+
+    -- TODO: this is debug
+    log(ERROR, "Matched resource ID: "..resource_id)
+    local decision,err = keycloak.decision(session_token,resource_id)
+    -- catch decision internal error
+    if err then
+        ngx.status = 500
+        log(ERROR, "Error fetching keycloak decision: "..err)
+        ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
+    end
+    -- catch decision unexpected return type
+    if type(decision) ~= "table" then
+        ngx.status = 500
+        log(ERROR, "Unexpected Keycloak decision return data type: "..type(decision))
+        ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
+    end
+    -- catch authorization error (eg. not authorized)
+    if decision.error ~= nil then
+        ngx.status = 403
+        log(ERROR, "Keycloak returned authorization error: "..cjson_s.encode(decision))
+        ngx.exit(ngx.HTTP_FORBIDDEN)
+    end
+    -- catch unknown Keycloak response
+    if decision.result ~= true then
+        ngx.status = 500
+        log(ERROR, "Unexpected Keycloak decision content: "..cjson_s.encode(decision))
+        ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
+    end
+
+    -- TODO: this is debug
+    log(ERROR, "Keycloak authorization successful.")
+    -- authz successful
+    return true
+end
+
 keycloak.__index = keycloak
 return keycloak
