@@ -486,6 +486,7 @@ function keycloak.decision(access_token, resource_id)
 end
 
 function keycloak.authenticate(openidc_opts)
+    local openidc_opts = openidc_opts or {}
     local opts = keycloak_openidc_opts(openidc_opts)
     local res, err, target_url, session = openidc.authenticate(opts)
 
