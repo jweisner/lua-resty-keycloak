@@ -382,24 +382,21 @@ local function keycloak_resourceid_for_request(request_uri,request_method)
     local keycloak_scope = keycloak_scope_for_method(ngx.req.get_method())
     local resources      = keycloak_resources()
 
-    -- TODO: log debug
-    log(ERROR, "DEBUG: request_method: "..request_method.." keycloak_scope:"..keycloak_scope.." resource count: "..#resources)
+    log(DEBUG, "request_method: "..request_method.." keycloak_scope:"..keycloak_scope.." resource count: "..#resources)
 
     -- initialize "best match"
     local found_depth = 0
     local found       = nil -- this will be replaced by the ID of the closest uri match
 
     for resource_id,resource in pairs(resources) do
-         -- TODO: log debug
-        log(DEBUG, "DEBUG: Trying resource: \""..resource.name.."\"")
+        log(DEBUG, "Trying resource: \""..resource.name.."\"")
 
         local next            = next -- scope searching speed hack
         local resource_scopes = keycloak_scopes_to_lookup_table(resource.resource_scopes)
 
         local resource_scopes_empty = false
         if next(resource_scopes) == nil then
-            -- TODO: log debug
-            log(ERROR, "DEBUG: Resource: \""..resource.name.."\": scopes empty.")
+            log(DEBUG, "Resource: \""..resource.name.."\": scopes empty.")
             resource_scopes_empty = true
         end
 
@@ -416,8 +413,7 @@ local function keycloak_resourceid_for_request(request_uri,request_method)
         -- only test the resource URIs if the method matches the resource scope
         -- or the resource doesn't list any associated scopes
         if resource_scopes_empty or resource_scope_matches then
-            -- TODO: log debug
-            log(ERROR, "DEBUG: Testing resource: \""..resource.name.."\": matching resource scope or scopes empty.")
+            log(DEBUG, "Testing resource: \""..resource.name.."\": matching resource scope or scopes empty.")
             for i,uri in ipairs(resource.uris) do
                 local match_depth = keycloak_uri_path_match(request_uri,uri) or 0
                 if match_depth > found_depth then
@@ -426,8 +422,7 @@ local function keycloak_resourceid_for_request(request_uri,request_method)
                 end
             end
         else
-            -- TODO: log debug
-            log(ERROR, "DEBUG: Skipping resource: \""..resource.name.."\": no matching resource scope and scopes not empty.")
+            log(DEBUG, "Skipping resource: \""..resource.name.."\": no matching resource scope and scopes not empty.")
         end
     end
     return found,found_depth
