@@ -353,19 +353,6 @@ local function keycloak_get_resource(resource_id)
     return resource,err
 end
 
-local function keycloak_resource(resource_id)
-    -- no cache here because this is only called by keycloak_get_resources(),
-    -- which has its own cache for the full hash
-    local resource,err = keycloak_get_resource(resource_id)
-    if err then
-        ngx.status = 500
-        log(ERROR, "Error getting ressource " .. resource_id .. ": " .. err)
-        ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
-    else
-        return resource
-    end
-end
-
 local function keycloak_get_resources()
     local resource_set = keycloak_resource_set()
     local resources    = {}
