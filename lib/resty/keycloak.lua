@@ -95,7 +95,7 @@ local function keycloak_load_config(config_path)
     local file, err = io.open(config_path, "rb")
     if file == nil then
         ngx.status = 500
-        log(ERROR, "Error loading keycloak json config: " .. err)
+        log(ERROR, "Error loading keycloak json config: "..err)
         ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
     end
 
@@ -174,7 +174,7 @@ end
 local function keycloak_cache_invalidate(type)
     local dict = ngx.shared[type]
     if dict then
-        log(DEBUG, "flushing cache for " .. type)
+        log(DEBUG, "flushing cache for "..type)
         dict.flush_all(dict)
         local nbr = dict.flush_expired(dict)
     end
@@ -217,7 +217,7 @@ local function keycloak_discovery(endpoint_type)
 
     if err then
         ngx.status = 500
-        log(ERROR, "Error getting keycloak discovery: " .. err)
+        log(ERROR, "Error getting keycloak discovery: "..err)
         ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
     else
         return discovery, nil
@@ -289,7 +289,7 @@ local function keycloak_call_endpoint(endpoint_type, endpoint_name, headers, bod
 
     if err then
         ngx.status = 500
-        log(ERROR, "Error calling endpoint "..endpoint_name..": " .. err)
+        log(ERROR, "Error calling endpoint "..endpoint_name..": "..err)
         ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
     end
 
@@ -305,7 +305,7 @@ local function keycloak_get_decision(access_token, resource_id)
 
     -- TODO: error if access_token nil
     local headers = {
-        ["Authorization"] = "Bearer " .. access_token
+        ["Authorization"] = "Bearer "..access_token
     }
 
     local body = {
@@ -322,7 +322,7 @@ end
 local function keycloak_get_resource_set()
     local endpoint_type = "uma2"
     local endpoint_name = "resource_registration_endpoint"
-    local headers       = { Authorization = "Bearer " .. keycloak.service_account_token() }
+    local headers       = { Authorization = "Bearer "..keycloak.service_account_token() }
     local body          = {}
     local method        = "GET"
     local params        = {}
@@ -336,7 +336,7 @@ local function keycloak_resource_set()
     local resource_set,err = keycloak_get_resource_set()
     if err then
         ngx.status = 500
-        log(ERROR, "Error getting ressource set: " .. err)
+        log(ERROR, "Error getting ressource set: "..err)
         ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
     else
         return resource_set
@@ -346,7 +346,7 @@ end
 local function keycloak_get_resource(resource_id)
     local endpoint_type = "uma2"
     local endpoint_name = "resource_registration_endpoint"
-    local headers       = { Authorization = "Bearer " .. keycloak.service_account_token() }
+    local headers       = { Authorization = "Bearer "..keycloak.service_account_token() }
     local body          = {}
     local params        = { resource_id }
     local method        = "GET"
@@ -361,7 +361,7 @@ local function keycloak_resource(resource_id)
     local resource,err = keycloak_get_resource(resource_id)
     if err then
         ngx.status = 500
-        log(ERROR, "Error getting ressource "..resource_id..": " .. err)
+        log(ERROR, "Error getting ressource "..resource_id..": "..err)
         ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
     else
         return resource
