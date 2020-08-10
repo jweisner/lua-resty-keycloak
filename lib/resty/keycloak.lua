@@ -122,7 +122,7 @@ end
 -- returns the base URL for the configured Keycloak realm
 local function keycloak_realm_url()
     local config          = keycloak_config()
-    local auth_server_url = keycloak_config()["auth-server-url"]
+    local auth_server_url = config["auth-server-url"]
 
     -- make sure the auth server url ends in /
     if string.sub(auth_server_url, -1) ~= '/' then
