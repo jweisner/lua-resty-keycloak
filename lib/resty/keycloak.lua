@@ -10,6 +10,7 @@ local pairs     = pairs
 local type      = type
 local ngx       = ngx
 
+-- localize Nginx logging
 local log   = ngx.log
 local DEBUG = ngx.DEBUG
 local ERROR = ngx.ERR
@@ -19,13 +20,16 @@ local WARN  = ngx.WARN
 local keycloak = {
     _VERSION = "0.0.1"
 }
+
+-- list of all caches used in this code
+-- this is used by keycloak.invalidate_caches()
 local keycloak_caches = {
     "keycloak_config",
     "keycloak_discovery"
     -- add any other caches we use here
-    -- this is used by keycloak.invalidate_caches()
 }
 
+-- Keycloak URIs for service discovery
 local keycloak_realm_discovery_endpoints = {
     openid = ".well-known/openid-configuration",
     uma2   = ".well-known/uma2-configuration"
@@ -34,6 +38,7 @@ local keycloak_realm_discovery_endpoints = {
 -- keycloak_openidc_defaults -- populated above keycloak_openidc_opts()
 
 -- this hash maps HTTP method to Keycloak scope
+-- these scopes can be added to resources in Keycloak to limit authz rules to HTTP methods
 local keycloak_scope_map = {
     GET     = "view",
     HEAD    = "view",
@@ -65,6 +70,7 @@ local function keycloak_table_to_set(list)
 end
 
 -- find a value in a table
+-- returns the value if found, nil if not found
 -- https://stackoverflow.com/a/664557
 local function keycloak_table_find(f,subject)
     for _, v in ipairs(subject) do
@@ -75,6 +81,7 @@ local function keycloak_table_find(f,subject)
     return nil
 end
 
+-- loads the Keycloak-generated keycloak.json from disk
 local function keycloak_load_config(config_path)
     config_path = config_path or ngx.config.prefix() .. "/conf/keycloak.json"
 
@@ -92,9 +99,9 @@ local function keycloak_load_config(config_path)
     return json
 end
 
--- Returns the keycloak.json data as a Lua table
--- either from cache or by loading from disk
-local function keycloak_config()
+-- Returns the Keycloak-generated keycloak.json data as a Lua table
+-- this file is generated in Keycloak, downloadable in the client "Installation" tab
+-- "Keycloak OIDC JSON" format option
     -- TODO: cache keycloak.json
     local config = keycloak_load_config()
     return config
