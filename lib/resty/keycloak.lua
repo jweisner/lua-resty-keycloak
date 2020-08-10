@@ -134,13 +134,13 @@ local function keycloak_realm_url()
 end
 
 -- returns a Keycloak URL for a given endpoint type
-local function keycloak_discovery_url(endpoint)
-    local endpoint = endpoint or "openid"
+local function keycloak_discovery_url(endpoint_type)
+    local endpoint_type = endpoint_type or "openid"
 
     -- make sure endpoint is valid
-    if keycloak_realm_discovery_endpoints[endpoint] == nil then
+    if keycloak_realm_discovery_endpoints[endpoint_type] == nil then
         ngx.status = 500
-        log(ERROR, "Realm discovery endpoint type \""..endpoint.."\" not configured.")
+        log(ERROR, "Unknown Keycloak realm discovery endpoint type \""..endpoint_type.."\"")
         ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
     end
 
