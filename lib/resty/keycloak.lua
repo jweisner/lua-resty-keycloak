@@ -127,10 +127,10 @@ local function keycloak_realm_url()
     local auth_server_url = config["auth-server-url"]
     -- make sure the auth server url ends in /
     if string.sub(auth_server_url, -1) ~= '/' then
-        auth_server_url = auth_server_url..'/'
+        auth_server_url = auth_server_url .. '/'
     end
 
-    return auth_server_url .. "realms/".. keycloak_config()["realm"]
+    return auth_server_url .. "realms/" .. keycloak_config()["realm"]
 end
 
 -- returns a Keycloak URL for a given endpoint type
@@ -140,11 +140,11 @@ local function keycloak_discovery_url(endpoint_type)
     -- make sure endpoint is valid
     if keycloak_realm_discovery_endpoints[endpoint_type] == nil then
         ngx.status = 500
-        log(ERROR, "Unknown Keycloak realm discovery endpoint type \""..endpoint_type.."\"")
+        log(ERROR, "Unknown Keycloak realm discovery endpoint type \"" .. endpoint_type .. "\"")
         ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
     end
 
-    return keycloak_realm_url() .."/".. keycloak_realm_discovery_endpoints["openid"]
+    return keycloak_realm_url() .. "/" .. keycloak_realm_discovery_endpoints["openid"]
 end
 
 -- This function is copied from resty.openidc
@@ -185,7 +185,7 @@ local function keycloak_get_discovery_doc(endpoint_type)
     assert(type(endpoint_type) == "string")
 
     local httpc         = http.new()
-    local discovery_url = keycloak_realm_url().."/"..keycloak_realm_discovery_endpoints[endpoint_type]
+    local discovery_url = keycloak_realm_url() .. "/" .. keycloak_realm_discovery_endpoints[endpoint_type]
 
     local httpc_params = {
         method    = "GET",
@@ -195,7 +195,7 @@ local function keycloak_get_discovery_doc(endpoint_type)
     local res,err = httpc:request_uri(discovery_url, httpc_params)
     if err then
         ngx.status = 500
-        log(ERROR, "Error fetching "..endpoint_type.." discovery at "..discovery_url.." : "..err)
+        log(ERROR, "Error fetching " .. endpoint_type .. " discovery at " .. discovery_url .. " : " .. err)
         ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
     end
 
@@ -208,7 +208,7 @@ local function keycloak_discovery(endpoint_type)
 
     if keycloak_realm_discovery_endpoints[endpoint_type] == nil then
         ngx.status = 500
-        log(ERROR, "Unknown Keycloak endpoint type \""..endpoint_type.."\"")
+        log(ERROR, "Unknown Keycloak endpoint type \"" .. endpoint_type .. "\"")
         ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
     end
 
@@ -251,11 +251,11 @@ local function keycloak_call_endpoint(endpoint_type, endpoint_name, headers, bod
     local params_string = ''
 
     for i,param in ipairs(params) do
-        params_string = '/'..param
+        params_string = '/' .. param
     end
 
     -- TODO: check that we have an endpoint for this
-    local endpoint_url = discovery[endpoint_name]..params_string
+    local endpoint_url = discovery[endpoint_name] .. params_string
 
     -- make sure form content type is set for POST method
     if method == "POST" then
@@ -289,7 +289,7 @@ local function keycloak_call_endpoint(endpoint_type, endpoint_name, headers, bod
 
     if err then
         ngx.status = 500
-        log(ERROR, "Error calling endpoint "..endpoint_name..": " .. err)
+        log(ERROR, "Error calling endpoint " .. endpoint_name .. ": " .. err)
         ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
     end
 
@@ -361,7 +361,7 @@ local function keycloak_resource(resource_id)
     local resource,err = keycloak_get_resource(resource_id)
     if err then
         ngx.status = 500
-        log(ERROR, "Error getting ressource "..resource_id..": " .. err)
+        log(ERROR, "Error getting ressource " .. resource_id .. ": " .. err)
         ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
     else
         return resource
@@ -444,38 +444,38 @@ local function keycloak_resourceid_for_request(request_uri,request_method)
     local keycloak_scope = keycloak_scope_for_method(ngx.req.get_method())
     local resources      = keycloak_resources()
 
-    log(DEBUG, "request_method: "..request_method.." keycloak_scope:"..keycloak_scope.." resource count: "..#resources)
+    log(DEBUG, "request_method: " .. request_method .. " keycloak_scope:" .. keycloak_scope .. " resource count: " .. #resources)
 
     -- initialize "best match"
     local found_depth = 0
     local found       = nil -- this will be replaced by the ID of the closest uri match
 
     for resource_id,resource in pairs(resources) do
-        log(DEBUG, "Trying resource: \""..resource.name.."\"")
+        log(DEBUG, "Trying resource: \"" .. resource.name .. "\"")
 
         local next            = next -- scope searching speed hack
         local resource_scopes = keycloak_scopes_to_lookup_table(resource.resource_scopes)
 
         local resource_scopes_empty = false
         if next(resource_scopes) == nil then
-            log(DEBUG, "Resource: \""..resource.name.."\": scopes empty.")
+            log(DEBUG, "Resource: \"" .. resource.name .. "\": scopes empty.")
             resource_scopes_empty = true
         end
 
         local resource_scope_matches = resource_scopes[keycloak_scope] or false
 
         if resource_scope_matches then
-            log(ERROR, "DEBUG: Resource: \""..resource.name.."\": found matching scope.")
+            log(ERROR, "DEBUG: Resource: \"" .. resource.name .. "\": found matching scope.")
             resource_scopes_empty = true
         else
-            log(ERROR, "DEBUG: Resource: \""..resource.name.."\": no matching scopes.")
+            log(ERROR, "DEBUG: Resource: \"" .. resource.name .. "\": no matching scopes.")
             resource_scopes_empty = true
         end
 
         -- only test the resource URIs if the method matches the resource scope
         -- or the resource doesn't list any associated scopes
         if resource_scopes_empty or resource_scope_matches then
-            log(DEBUG, "Testing resource: \""..resource.name.."\": matching resource scope or scopes empty.")
+            log(DEBUG, "Testing resource: \"" .. resource.name .. "\": matching resource scope or scopes empty.")
             for i,uri in ipairs(resource.uris) do
                 local match_depth = keycloak_uri_path_match(request_uri,uri) or 0
                 if match_depth > found_depth then
@@ -484,7 +484,7 @@ local function keycloak_resourceid_for_request(request_uri,request_method)
                 end
             end
         else
-            log(DEBUG, "Skipping resource: \""..resource.name.."\": no matching resource scope and scopes not empty.")
+            log(DEBUG, "Skipping resource: \"" .. resource.name .. "\": no matching resource scope and scopes not empty.")
         end
     end
     return found,found_depth
@@ -512,10 +512,10 @@ function keycloak.dumpTable(table, depth)
 
     for k,v in pairs(table) do
         if (type(v) == "table") then
-            ngx.say(string.rep("  ", depth)..k..":")
+            ngx.say(string.rep("  ", depth) .. k .. ":")
             keycloak.dumpTable(v, depth+1)
         else
-            ngx.say(string.rep("  ", depth)..k..": ",v)
+            ngx.say(string.rep("  ", depth) .. k .. ": ",v)
         end
     end
 end
@@ -566,30 +566,30 @@ function keycloak.authorize(session_token)
     end
 
     -- TODO: this is debug
-    log(ERROR, "Matched resource ID: "..resource_id)
+    log(ERROR, "Matched resource ID: " .. resource_id)
     local decision,err = keycloak.decision(session_token,resource_id)
     -- catch decision internal error
     if err then
         ngx.status = 500
-        log(ERROR, "Error fetching keycloak decision: "..err)
+        log(ERROR, "Error fetching keycloak decision: " .. err)
         ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
     end
     -- catch decision unexpected return type
     if type(decision) ~= "table" then
         ngx.status = 500
-        log(ERROR, "Unexpected Keycloak decision return data type: "..type(decision))
+        log(ERROR, "Unexpected Keycloak decision return data type: " .. type(decision))
         ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
     end
     -- catch authorization error (eg. not authorized)
     if decision.error ~= nil then
         ngx.status = 403
-        log(ERROR, "Keycloak returned authorization error: "..cjson_s.encode(decision))
+        log(ERROR, "Keycloak returned authorization error: " .. cjson_s.encode(decision))
         ngx.exit(ngx.HTTP_FORBIDDEN)
     end
     -- catch unknown Keycloak response
     if decision.result ~= true then
         ngx.status = 500
-        log(ERROR, "Unexpected Keycloak decision content: "..cjson_s.encode(decision))
+        log(ERROR, "Unexpected Keycloak decision content: " .. cjson_s.encode(decision))
         ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
     end
 
