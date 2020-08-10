@@ -102,6 +102,7 @@ local function keycloak_load_config(config_path)
     file:close()
 
     local json = cjson.decode(data_json)
+    -- TODO: check for JSON decode error
     return json
 end
 
