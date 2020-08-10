@@ -68,6 +68,8 @@ end
 -- input: { 1 = foo, 2 = bar }
 -- output: { foo = true, bar = true }
 local function keycloak_table_to_set(list)
+    assert(type(list) == "table")
+
     local set = {}
     for _,l in ipairs(list) do set[l] = true end
     return set
