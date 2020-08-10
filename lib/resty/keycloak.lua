@@ -180,6 +180,7 @@ local function keycloak_cache_invalidate(type)
     end
 end
 
+-- fetch the OpenID discovery document for the given endpoint type
 local function keycloak_get_discovery_doc(endpoint_type)
     assert(type(endpoint_type) == "string")
 
@@ -214,6 +215,8 @@ local function keycloak_discovery(endpoint_type)
     end
 end
 
+-- converts HTTP method into Keycloak scope
+-- eg. GET => read
 local function keycloak_scope_for_method(method)
     local scope = "extended" -- this scope is returned for unknown HTTP methods (eg. WebDAV)
     if keycloak_scope_map[method] ~= nil then
