@@ -181,7 +181,7 @@ local function keycloak_cache_invalidate(type)
 end
 
 local function keycloak_get_discovery_doc(endpoint_type)
-    local endpoint_type = endpoint_type or "openid"
+    assert(type(endpoint_type) == "string")
 
     local httpc         = http.new()
     local discovery_url = keycloak_realm_url().."/"..keycloak_realm_discovery_endpoints[endpoint_type]
