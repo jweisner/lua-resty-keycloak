@@ -109,8 +109,11 @@ end
 -- Returns the Keycloak-generated keycloak.json data as a Lua table
 -- this file is generated in Keycloak, downloadable in the client "Installation" tab
 -- "Keycloak OIDC JSON" format option
+local function keycloak_config(config_path)
+    local config_path = config_path or nil
+
     -- TODO: cache keycloak.json
-    local config = keycloak_load_config()
+    local config = keycloak_load_config(config_path)
     return config
 end
 
