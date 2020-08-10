@@ -184,12 +184,6 @@ end
 local function keycloak_get_discovery_doc(endpoint_type)
     assert(type(endpoint_type) == "string")
 
-    if keycloak_realm_discovery_endpoints[endpoint_type] == nil then
-        ngx.status = 500
-        log(ERROR, "Unknown Keycloak endpoint type \""..endpoint_type.."\"")
-        ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
-    end
-
     local httpc         = http.new()
     local discovery_url = keycloak_realm_url().."/"..keycloak_realm_discovery_endpoints[endpoint_type]
 
@@ -211,6 +205,12 @@ end
 
 local function keycloak_discovery(endpoint_type)
     local endpoint_type = endpoint_type or "openid"
+
+    if keycloak_realm_discovery_endpoints[endpoint_type] == nil then
+        ngx.status = 500
+        log(ERROR, "Unknown Keycloak endpoint type \""..endpoint_type.."\"")
+        ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
+    end
 
     -- TODO: cache
     local discovery, err = keycloak_get_discovery_doc(endpoint_type)
