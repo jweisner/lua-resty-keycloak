@@ -134,7 +134,7 @@ local function keycloak_realm_url()
 end
 
 local function keycloak_discovery_url(endpoint)
-    local endpoint = endpoint or openid
+    local endpoint = endpoint or "openid"
     -- TODO: check that we have a configured endpoint url
     return keycloak_realm_url()  .."/".. keycloak_realm_discovery_endpoints["openid"]
 end
