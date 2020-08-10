@@ -119,6 +119,7 @@ local function keycloak_config(config_path)
     return config
 end
 
+-- returns the base URL for the configured Keycloak realm
 local function keycloak_realm_url()
     local config          = keycloak_config()
     local auth_server_url = keycloak_config()["auth-server-url"]
