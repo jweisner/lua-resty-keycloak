@@ -210,6 +210,8 @@ local function keycloak_get_discovery_doc(endpoint_type)
 end
 
 local function keycloak_discovery(endpoint_type)
+    local endpoint_type = endpoint_type or "openid"
+
     local discovery, err = keycloak_get_discovery_doc(endpoint_type)
 
     if err then
