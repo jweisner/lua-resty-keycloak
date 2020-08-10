@@ -62,8 +62,11 @@ local function keycloak_merge(one, two)
     return two
 end
 
--- convert numbered table into a set
+-- convert numbered table into a set, discards keys
 -- https://stackoverflow.com/a/656232
+--
+-- input: { 1 = foo, 2 = bar }
+-- output: { foo = true, bar = true }
 local function keycloak_table_to_set(list)
     local set = {}
     for _,l in ipairs(list) do set[l] = true end
