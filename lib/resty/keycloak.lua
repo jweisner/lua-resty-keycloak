@@ -133,6 +133,7 @@ local function keycloak_realm_url()
     return auth_server_url .. "realms/".. keycloak_config()["realm"]
 end
 
+-- returns a Keycloak URL for a given endpoint type
 local function keycloak_discovery_url(endpoint)
     local endpoint = endpoint or "openid"
     -- TODO: check that we have a configured endpoint url
