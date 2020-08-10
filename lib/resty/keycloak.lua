@@ -9,8 +9,6 @@ local ipairs    = ipairs
 local pairs     = pairs
 local type      = type
 local ngx       = ngx
-local b64       = ngx.encode_base64
-local unb64     = ngx.decode_base64
 
 local log   = ngx.log
 local DEBUG = ngx.DEBUG
