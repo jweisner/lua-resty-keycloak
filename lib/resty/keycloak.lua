@@ -340,6 +340,9 @@ end
 
 -- return the match depth or nil if not found
 local function keycloak_uri_path_match(subject, test)
+    local subject = subject or ""
+    local test    = test    or ""
+
     if subject == test then
         return string.len(test)
     end
@@ -360,6 +363,8 @@ local function keycloak_uri_path_match(subject, test)
 end
 
 local function keycloak_scopes_to_lookup_table(scope_hash)
+    assert(type(scope_hash) == "table")
+
     local lookup_table = {}
     for i,scope in ipairs(scope_hash) do
         lookup_table[scope.name] = true
