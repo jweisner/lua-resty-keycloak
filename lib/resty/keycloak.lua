@@ -15,6 +15,10 @@ local DEBUG = ngx.DEBUG
 local ERROR = ngx.ERR
 local WARN  = ngx.WARN
 
+-- initialize the resty-keycloak instance
+local keycloak = {
+    _VERSION = "0.0.1"
+}
 local keycloak_caches = {
     "keycloak_config",
     "keycloak_discovery"
@@ -27,11 +31,7 @@ local keycloak_realm_discovery_endpoints = {
     uma2   = ".well-known/uma2-configuration"
 }
 
--- keycloak_openidc_defaults -- populated at the bottom of private functions
-
-local keycloak = {
-    _VERSION = "0.0.1"
-}
+-- keycloak_openidc_defaults -- populated above keycloak_openidc_opts()
 
 -- this hash maps HTTP method to Keycloak scope
 local keycloak_scope_map = {
