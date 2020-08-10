@@ -462,10 +462,10 @@ local function keycloak_resourceid_for_request(request_uri,request_method)
         local resource_scope_matches = resource_scopes[keycloak_scope] or false
 
         if resource_scope_matches then
-            log(ERROR, "DEBUG: Resource: \"" .. resource.name .. "\": found matching scope.")
+            log(DEBUG, "Resource: \"" .. resource.name .. "\": found matching scope.")
             resource_scopes_empty = true
         else
-            log(ERROR, "DEBUG: Resource: \"" .. resource.name .. "\": no matching scopes.")
+            log(DEBUG, "Resource: \"" .. resource.name .. "\": no matching scopes.")
             resource_scopes_empty = true
         end
 
