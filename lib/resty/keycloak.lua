@@ -54,8 +54,9 @@ local keycloak_scope_map = {
 -- merge tables. Table "one" has priority
 -- eg. keycloak_merge(config, defaults)
 local function keycloak_merge(one, two)
-    local one = one or {}
-    local two = two or {}
+    assert(type(one) == "table")
+    assert(type(two) == "table")
+
     for k, v in pairs(one) do two[k] = v end
 
     return two
