@@ -180,8 +180,30 @@ local function keycloak_cache_invalidate(type)
     end
 end
 
+local function keycloak_get_discovery_doc(endpoint_type)
+    local endpoint_type = endpoint_type or "openid"
+
+    local httpc         = http.new()
+    local discovery_url = keycloak_realm_url().."/"..keycloak_realm_discovery_endpoints[endpoint_type]
+
+    local httpc_params = {
+        method    = "GET",
+        keepalive = false
+    }
+
+    local res,err = httpc:request_uri(discovery_url, httpc_params)
+    if err then
+        ngx.status = 500
+        log(ERROR, "Error fetching "..endpoint_type.." discovery at "..discovery_url.." : "..err)
+        ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
+    end
+
+    -- TODO: check for json decode errors
+    return cjson_s.decode(res.body), err
+end
+
 local function keycloak_discovery(endpoint_type)
-    local discovery, err = keycloak.get_discovery_doc(endpoint_type)
+    local discovery, err = keycloak_get_discovery_doc(endpoint_type)
 
     if err then
         ngx.status = 500
@@ -458,28 +480,6 @@ end
 
 -----------
 -- Public Functions
-
-function keycloak.get_discovery_doc(endpoint_type)
-    local endpoint_type = endpoint_type or "openid"
-
-    local httpc         = http.new()
-    local discovery_url = keycloak_realm_url().."/"..keycloak_realm_discovery_endpoints[endpoint_type]
-
-    local httpc_params = {
-        method    = "GET",
-        keepalive = false
-    }
-
-    local res,err = httpc:request_uri(discovery_url, httpc_params)
-    if err then
-        ngx.status = 500
-        log(ERROR, "Error fetching "..endpoint_type.." discovery at "..discovery_url.." : "..err)
-        ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
-    end
-
-    -- TODO: check for json decode errors
-    return cjson_s.decode(res.body), err
-end
 
 function keycloak.service_account_token()
     local endpoint_name = "token_endpoint"
