@@ -1,21 +1,21 @@
-local require = require
-local cjson = require("cjson")
-local cjson_s = require("cjson.safe")
-local http = require("resty.http")
+local require   = require
+local cjson     = require("cjson")
+local cjson_s   = require("cjson.safe")
+local http      = require("resty.http")
 local r_session = require("resty.session")
-local openidc = require("resty.openidc")
-local string = string
-local ipairs = ipairs
-local pairs = pairs
-local type = type
-local ngx = ngx
-local b64 = ngx.encode_base64
-local unb64 = ngx.decode_base64
+local openidc   = require("resty.openidc")
+local string    = string
+local ipairs    = ipairs
+local pairs     = pairs
+local type      = type
+local ngx       = ngx
+local b64       = ngx.encode_base64
+local unb64     = ngx.decode_base64
 
-local log = ngx.log
+local log   = ngx.log
 local DEBUG = ngx.DEBUG
 local ERROR = ngx.ERR
-local WARN = ngx.WARN
+local WARN  = ngx.WARN
 
 local keycloak_caches = {
     "keycloak_config",
@@ -103,8 +103,9 @@ local function keycloak_config()
 end
 
 local function keycloak_realm_url()
-    local config = keycloak_config()
+    local config          = keycloak_config()
     local auth_server_url = keycloak_config()["auth-server-url"]
+
     -- make sure the auth server url ends in /
     if string.sub(auth_server_url, -1) ~= '/' then
         auth_server_url = auth_server_url..'/'
@@ -176,14 +177,14 @@ end
 local function keycloak_call_endpoint(endpoint_type, endpoint_name, headers, body, params, method)
     local endpoint_type = endpoint_type or "openid"
     local endpoint_name = endpoint_name or "token_endpoint"
-    local headers = headers or {}
-    local body = body or {}
-    local params = params or {}
-    local method = method or "POST"
+    local headers       = headers or {}
+    local body          = body or {}
+    local params        = params or {}
+    local method        = method or "POST"
 
-    local discovery = keycloak_discovery(endpoint_type)
-    local config = keycloak_config()
-    local httpc = http.new()
+    local discovery     = keycloak_discovery(endpoint_type)
+    local config        = keycloak_config()
+    local httpc         = http.new()
 
     local params_string = ''
 
@@ -213,11 +214,11 @@ local function keycloak_call_endpoint(endpoint_type, endpoint_name, headers, bod
     -- TODO: proxy
 
     local httpc_params = {
-        method = method,
-        body = ngx.encode_args(body),
-        headers = headers,
+        method     = method,
+        body       = ngx.encode_args(body),
+        headers    = headers,
         ssl_verify = true,
-        keepalive = false
+        keepalive  = false
     }
 
     -- log(ERROR, "DEBUG: keycloak_call_endpoint() endpoint_url: "..endpoint_url)
@@ -237,16 +238,18 @@ end
 local function keycloak_get_decision(access_token, resource_id)
     local endpoint_name = "token_endpoint"
     local endpoint_type = "uma2"
-    local config = keycloak_config()
+
+    local config        = keycloak_config()
+
     -- TODO: error if access_token nil
     local headers = {
         ["Authorization"] = "Bearer " .. access_token
     }
 
     local body = {
-        grant_type = "urn:ietf:params:oauth:grant-type:uma-ticket",
-        audience = config.resource,
-        permission = resource_id,
+        grant_type    = "urn:ietf:params:oauth:grant-type:uma-ticket",
+        audience      = config.resource,
+        permission    = resource_id,
         response_mode = "decision"
     }
 
@@ -257,11 +260,11 @@ end
 local function keycloak_get_resource_set()
     local endpoint_type = "uma2"
     local endpoint_name = "resource_registration_endpoint"
-    local headers = { Authorization = "Bearer " .. keycloak.service_account_token() }
-    local body = {}
-    local method = "GET"
-    local params = {}
-    local resource_set,err = keycloak_call_endpoint(endpoint_type, endpoint_name, headers, body, params, method)
+    local headers       = { Authorization = "Bearer " .. keycloak.service_account_token() }
+    local body          = {}
+    local method        = "GET"
+    local params        = {}
+    local resource_set,  err = keycloak_call_endpoint(endpoint_type, endpoint_name, headers, body, params, method)
 
     return resource_set,err
 end
@@ -281,11 +284,11 @@ end
 local function keycloak_get_resource(resource_id)
     local endpoint_type = "uma2"
     local endpoint_name = "resource_registration_endpoint"
-    local headers = { Authorization = "Bearer " .. keycloak.service_account_token() }
-    local body = {}
-    local params = { resource_id }
-    local method = "GET"
-    local resource,err = keycloak_call_endpoint(endpoint_type, endpoint_name, headers, body, params, method)
+    local headers       = { Authorization = "Bearer " .. keycloak.service_account_token() }
+    local body          = {}
+    local params        = { resource_id }
+    local method        = "GET"
+    local resource,      err = keycloak_call_endpoint(endpoint_type, endpoint_name, headers, body, params, method)
 
     return resource,err
 end
@@ -305,7 +308,7 @@ end
 
 local function keycloak_get_resources()
     local resource_set = keycloak_resource_set()
-    local resources = {}
+    local resources    = {}
 
     for k,resource_id in ipairs(resource_set) do
         -- log(ERROR, "DEBUG: calling keycloak_get_resource("..resource_id..")")
@@ -331,6 +334,7 @@ local keycloak_openidc_defaults = {
 
 local function keycloak_openidc_opts(openidc_opts)
     local openidc_opts = openidc_opts or {}
+
     return keycloak_merge(openidc_opts, keycloak_openidc_defaults)
 end
 
@@ -367,24 +371,24 @@ end
 -- return the resource_id for the deepest match of uris for the given uri
 -- returns nil if none found
 local function keycloak_resourceid_for_request(request_uri,request_method)
-    local request_uri = request_uri or ngx.var.request_uri
+    local request_uri    = request_uri or ngx.var.request_uri
     local request_method = request_method or ngx.req.get_method()
 
     local keycloak_scope = keycloak_scope_for_method(ngx.req.get_method())
-    local resources = keycloak_resources()
+    local resources      = keycloak_resources()
 
     -- TODO: log debug
     log(ERROR, "DEBUG: request_method: "..request_method.." keycloak_scope:"..keycloak_scope.." resource count: "..#resources)
 
     -- initialize "best match"
     local found_depth = 0
-    local found = nil -- this will be replaced by the ID of the closest uri match
+    local found       = nil -- this will be replaced by the ID of the closest uri match
 
     for resource_id,resource in pairs(resources) do
-        -- TODO: log debug
-        log(ERROR, "DEBUG: Trying resource: \""..resource.name.."\"")
+         -- TODO: log debug
+        log(DEBUG, "DEBUG: Trying resource: \""..resource.name.."\"")
 
-        local next = next -- scope searching speed hack
+        local next            = next -- scope searching speed hack
         local resource_scopes = keycloak_scopes_to_lookup_table(resource.resource_scopes)
 
         local resource_scopes_empty = false
@@ -413,7 +417,7 @@ local function keycloak_resourceid_for_request(request_uri,request_method)
                 local match_depth = keycloak_uri_path_match(request_uri,uri) or 0
                 if match_depth > found_depth then
                     found_depth = match_depth
-                    found = resource_id
+                    found       = resource_id
                 end
             end
         else
@@ -430,11 +434,11 @@ end
 function keycloak.get_discovery_doc(endpoint_type)
     local endpoint_type = endpoint_type or "openid"
 
-    local httpc = http.new()
+    local httpc         = http.new()
     local discovery_url = keycloak_realm_url().."/"..keycloak_realm_discovery_endpoints[endpoint_type]
 
     local httpc_params = {
-        method = "GET",
+        method    = "GET",
         keepalive = false
     }
 
@@ -452,7 +456,7 @@ end
 function keycloak.service_account_token()
     local endpoint_name = "token_endpoint"
     local endpoint_type = "openid"
-    local config = keycloak_config()
+    local config        = keycloak_config()
 
     local body = {
         grant_type = "client_credentials"
@@ -465,6 +469,7 @@ end
 
 function keycloak.dumpTable(table, depth)
     local depth = depth or 0
+
     for k,v in pairs(table) do
         if (type(v) == "table") then
             ngx.say(string.rep("  ", depth)..k..":")
@@ -487,7 +492,8 @@ end
 
 function keycloak.authenticate(openidc_opts)
     local openidc_opts = openidc_opts or {}
-    local opts = keycloak_openidc_opts(openidc_opts)
+
+    local opts                          = keycloak_openidc_opts(openidc_opts)
     local res, err, target_url, session = openidc.authenticate(opts)
 
     return res, err, target_url, session
