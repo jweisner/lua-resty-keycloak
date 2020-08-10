@@ -17,6 +17,7 @@ local ERROR = ngx.ERR
 local WARN  = ngx.WARN
 
 -- initialize the resty-keycloak instance
+-- TODO: resolve all of the different ways the config file (keycloak.json) path could be provided to the extension. The config data needs to be loaded early.
 local keycloak = {
     _VERSION = "0.0.1"
 }
