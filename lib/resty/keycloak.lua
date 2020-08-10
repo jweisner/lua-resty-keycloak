@@ -111,6 +111,7 @@ end
 -- this file is generated in Keycloak, downloadable in the client "Installation" tab
 -- "Keycloak OIDC JSON" format option
 local function keycloak_config(config_path)
+    -- TODO config_path needs to some from a global
     local config_path = config_path or nil
 
     -- TODO: cache keycloak.json
