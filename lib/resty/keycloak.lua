@@ -283,8 +283,6 @@ local function keycloak_call_endpoint(endpoint_type, endpoint_name, headers, bod
         keepalive  = false
     }
 
-    -- log(ERROR, "DEBUG: keycloak_call_endpoint() endpoint_url: "..endpoint_url)
-
     local res, err = httpc:request_uri(endpoint_url, httpc_params)
 
     if err then
@@ -373,7 +371,6 @@ local function keycloak_get_resources()
     local resources    = {}
 
     for k,resource_id in ipairs(resource_set) do
-        -- log(ERROR, "DEBUG: calling keycloak_get_resource("..resource_id..")")
         resources[resource_id] = keycloak_get_resource(resource_id)
     end
 
