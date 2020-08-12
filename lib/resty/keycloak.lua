@@ -52,6 +52,9 @@ local keycloak_scope_map = {
     TRACE   = "debug"
 }
 
+-----------
+-- Utility Functions
+
 -- merge tables. Table "one" has priority
 -- eg. keycloak_merge(config, defaults)
 local function keycloak_merge(one, two)
@@ -87,6 +90,9 @@ local function keycloak_table_find(f,subject)
     end
     return nil
 end
+
+-----------
+-- Private Functions
 
 -- loads the Keycloak-generated keycloak.json from disk
 local function keycloak_load_config(config_path)
@@ -582,6 +588,9 @@ function keycloak.authorize(session_token)
     -- authz successful
     return true
 end
+
+-----------
+-- Bless keycloak table as object
 
 keycloak.__index = keycloak
 return keycloak
