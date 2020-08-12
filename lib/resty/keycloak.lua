@@ -372,7 +372,8 @@ local function keycloak_get_resource_set()
 end
 
 local function keycloak_resource_set()
-    -- TODO: fetch from cache
+    -- TODO: cache
+
     local resource_set,err = keycloak_get_resource_set()
     if err then
         ngx.status = 500
