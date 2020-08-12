@@ -355,8 +355,8 @@ local function keycloak_get_decision(access_token, resource_id)
         response_mode = "decision"
     }
 
-    local res, err = keycloak_call_endpoint(endpoint_type, endpoint_name, headers, body)
-    return res, err
+    local res = keycloak_call_endpoint(endpoint_type, endpoint_name, headers, body)
+    return res
 end
 
 local function keycloak_get_resource_set()
@@ -366,22 +366,17 @@ local function keycloak_get_resource_set()
     local body          = {}
     local method        = "GET"
     local params        = {}
-    local resource_set,  err = keycloak_call_endpoint(endpoint_type, endpoint_name, headers, body, params, method)
+    local resource_set  = keycloak_call_endpoint(endpoint_type, endpoint_name, headers, body, params, method)
 
-    return resource_set,err
+    return resource_set
 end
 
 local function keycloak_resource_set()
     -- TODO: cache
 
     local resource_set,err = keycloak_get_resource_set()
-    if err then
-        ngx.status = 500
-        log(ERROR, "Error getting ressource set: " .. err)
-        ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
-    else
-        return resource_set
-    end
+
+    return resource_set
 end
 
 local function keycloak_get_resource(resource_id)
@@ -391,9 +386,9 @@ local function keycloak_get_resource(resource_id)
     local body          = {}
     local params        = { resource_id }
     local method        = "GET"
-    local resource,      err = keycloak_call_endpoint(endpoint_type, endpoint_name, headers, body, params, method)
+    local resource      = keycloak_call_endpoint(endpoint_type, endpoint_name, headers, body, params, method)
 
-    return resource,err
+    return resource
 end
 
 local function keycloak_get_resources()
