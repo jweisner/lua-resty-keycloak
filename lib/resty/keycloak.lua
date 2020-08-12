@@ -66,18 +66,6 @@ local function keycloak_merge(one, two)
     return two
 end
 
--- find a value in a table
--- returns the value if found, nil if not found
--- https://stackoverflow.com/a/664557
-local function keycloak_table_find(f,subject)
-    for _, v in ipairs(subject) do
-        if f == v then
-            return v
-        end
-    end
-    return nil
-end
-
 -----------
 -- Private Functions
 
