@@ -274,6 +274,7 @@ local function keycloak_call_endpoint(endpoint_type, endpoint_name, headers, bod
     end
     local endpoint_url = discovery[endpoint_name] .. params_string
 
+    -- ensure basic requirements are included for Keycloak enpoint POST requests
     if method == "POST" then
         -- make sure form content type is set for POST method
         if headers["Content-Type"] == nil then
