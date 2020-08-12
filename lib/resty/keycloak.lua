@@ -344,7 +344,6 @@ local function keycloak_get_decision(access_token, resource_id)
 
     local config        = keycloak_config()
 
-    -- TODO: error if access_token nil
     local headers = {
         ["Authorization"] = "Bearer " .. access_token
     }
