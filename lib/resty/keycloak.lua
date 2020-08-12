@@ -544,8 +544,7 @@ function keycloak.authorize(session_token)
         ngx.exit(ngx.HTTP_FORBIDDEN)
     end
 
-    -- TODO: this is debug
-    log(ERROR, "Matching URI with Keycloak resources")
+    log(DEBUG, "Matching URI with Keycloak resources")
     local resource_id = keycloak_resourceid_for_request()
 
     -- forbidden if no matching resources found
@@ -555,8 +554,7 @@ function keycloak.authorize(session_token)
         ngx.exit(ngx.HTTP_FORBIDDEN)
     end
 
-    -- TODO: this is debug
-    log(ERROR, "Matched resource ID: " .. resource_id)
+    log(DEBUG, "Matched resource ID: " .. resource_id)
     local decision,err = keycloak.decision(session_token,resource_id)
     -- catch decision internal error
     if err then
@@ -583,8 +581,7 @@ function keycloak.authorize(session_token)
         ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
     end
 
-    -- TODO: this is debug
-    log(ERROR, "Keycloak authorization successful.")
+    log(DEBUG, "Keycloak authorization successful.")
     -- authz successful
     return true
 end
