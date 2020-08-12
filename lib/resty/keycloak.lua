@@ -52,6 +52,13 @@ local keycloak_scope_map = {
     TRACE   = "debug"
 }
 
+-- timeouts used for httpc client calls (in milliseconds)
+local keycloak_http_timeouts = {
+    connect_timeout = 10000,
+    send_timeout    = 5000,
+    read_timeout    = 5000
+}
+
 -----------
 -- Utility Functions
 
@@ -173,6 +180,13 @@ local function keycloak_get_discovery_doc(endpoint_type)
         keepalive = false
     }
 
+    -- configure httpc timeouts (connect_timeout, send_timeout, read_timeout)
+    httpc.set_timeouts(
+        keycloak_http_timeouts["connect_timeout"],
+        keycloak_http_timeouts["send_timeout"],
+        keycloak_http_timeouts["read_timeout"]
+    )
+
     local res,err = httpc:request_uri(discovery_url, httpc_params)
     if err then
         ngx.status = 500
@@ -257,8 +271,14 @@ local function keycloak_call_endpoint(endpoint_type, endpoint_name, headers, bod
         end
     end
 
-    -- TODO: timeouts
     -- TODO: proxy
+    -- configure httpc timeouts (connect_timeout, send_timeout, read_timeout)
+    httpc.set_timeouts(
+        keycloak_http_timeouts["connect_timeout"],
+        keycloak_http_timeouts["send_timeout"],
+        keycloak_http_timeouts["read_timeout"]
+    )
+
 
     local httpc_params = {
         method     = method,
