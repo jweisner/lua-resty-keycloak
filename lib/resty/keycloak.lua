@@ -224,6 +224,8 @@ end
 -- converts HTTP method into Keycloak scope or "extended" if unknown
 -- eg. GET => read
 local function keycloak_scope_for_method(method)
+    assert(type(method) == "string")
+
     local scope = "extended" -- this scope is returned for unknown HTTP methods (eg. WebDAV)
 
     -- if we have mapped the HTTP request method to a Keycloak scope, use that
@@ -334,6 +336,9 @@ end
 --
 -- returns the raw response to the caller
 local function keycloak_get_decision(access_token, resource_id)
+    assert(type(access_token) == "string")
+    assert(type(resource_id)  == "string")
+
     local endpoint_name = "token_endpoint"
     local endpoint_type = "uma2"
 
