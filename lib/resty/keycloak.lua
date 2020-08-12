@@ -230,8 +230,7 @@ local function keycloak_call_endpoint(endpoint_type, endpoint_name, headers, bod
     local httpc         = http.new()
 
     local params_string = ''
-
-    for i,param in ipairs(params) do
+    for _,param in ipairs(params) do
         params_string = '/' .. param
     end
 
@@ -393,7 +392,7 @@ local function keycloak_scopes_to_lookup_table(scope_hash)
     assert(type(scope_hash) == "table")
 
     local lookup_table = {}
-    for i,scope in ipairs(scope_hash) do
+    for _,scope in ipairs(scope_hash) do
         lookup_table[scope.name] = true
     end
 
@@ -441,7 +440,7 @@ local function keycloak_resourceid_for_request(request_uri,request_method)
         -- or the resource doesn't list any associated scopes
         if resource_scopes_empty or resource_scope_matches then
             log(DEBUG, "Testing resource: \"" .. resource.name .. "\": matching resource scope or scopes empty.")
-            for i,uri in ipairs(resource.uris) do
+            for _,uri in ipairs(resource.uris) do
                 local match_depth = keycloak_uri_path_match(request_uri,uri) or 0
                 if match_depth > found_depth then
                     found_depth = match_depth
@@ -506,7 +505,7 @@ end
 
 -- invalidate all server-wide caches
 function keycloak.invalidate_caches()
-    for i,cache in ipairs(keycloak_caches) do
+    for _,cache in ipairs(keycloak_caches) do
         keycloak_cache_invalidate(cache)
     end
 end
