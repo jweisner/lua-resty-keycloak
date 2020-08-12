@@ -201,6 +201,8 @@ end
 local function keycloak_discovery(endpoint_type)
     local endpoint_type = endpoint_type or "openid"
 
+    -- if endpoint_type is not a key in keycloak_realm_discovery_endpoints,
+    -- it's invalid, abort.
     if keycloak_realm_discovery_endpoints[endpoint_type] == nil then
         ngx.status = 500
         log(ERROR, "Unknown Keycloak endpoint type \"" .. endpoint_type .. "\"")
@@ -219,10 +221,12 @@ local function keycloak_discovery(endpoint_type)
     end
 end
 
--- converts HTTP method into Keycloak scope
+-- converts HTTP method into Keycloak scope or "extended" if unknown
 -- eg. GET => read
 local function keycloak_scope_for_method(method)
     local scope = "extended" -- this scope is returned for unknown HTTP methods (eg. WebDAV)
+
+    -- if we have mapped the HTTP request method to a Keycloak scope, use that
     if keycloak_scope_map[method] ~= nil then
         scope = keycloak_scope_map[method]
     end
@@ -230,7 +234,20 @@ local function keycloak_scope_for_method(method)
     return scope
 end
 
--- this function is adapted from openidc.call_token_endpoint()
+--[[
+    make an HTTP request to a Keycloak endpoint
+
+    endpoint_type (string): from keycloak_realm_discovery_endpoints
+    endpoint_name (string): the index in the discovery document data that will have the endpoint URL to call
+    headers (table)       : HTTP headers to add to the Keycloak request (see Keycloak API documentation)
+    body (table)          : body content for HTTP POST requests. Known requirements added if missing (see Keycloak API documentation)
+    params (table)        : HTTP URL parameters (eg. ?foo=bar&baz=qux) (see Keycloak API documentation)
+    method (string)       : HTTP request method (eg. GET or POST) (see Keycloak API documentation)
+
+    returns the decoded JSON from the Keycloak response
+
+    this function is adapted from openidc.call_token_endpoint()
+--]]
 local function keycloak_call_endpoint(endpoint_type, endpoint_name, headers, body, params, method)
     local endpoint_type = endpoint_type or "openid"
     local endpoint_name = endpoint_name or "token_endpoint"
@@ -243,6 +260,7 @@ local function keycloak_call_endpoint(endpoint_type, endpoint_name, headers, bod
     local config        = keycloak_config()
     local httpc         = http.new()
 
+    -- build params string from table
     local params_string = ''
     for _,param in ipairs(params) do
         params_string = '/' .. param
@@ -256,22 +274,23 @@ local function keycloak_call_endpoint(endpoint_type, endpoint_name, headers, bod
     end
     local endpoint_url = discovery[endpoint_name] .. params_string
 
-    -- make sure form content type is set for POST method
     if method == "POST" then
+        -- make sure form content type is set for POST method
         if headers["Content-Type"] == nil then
             headers["Content-Type"] = "application/x-www-form-urlencoded"
         end
 
+        -- make sure client_id is set (resource server authentication)
         if body.client_id == nil then
             body.client_id = config.resource
         end
 
+        -- make sure client secret is included (resource server authentication)
         if body.client_secret == nil then
             body.client_secret = config.credentials.secret
         end
     end
 
-    -- TODO: proxy
     -- configure httpc timeouts (connect_timeout, send_timeout, read_timeout)
     httpc.set_timeouts(
         keycloak_http_timeouts["connect_timeout"],
@@ -279,6 +298,7 @@ local function keycloak_call_endpoint(endpoint_type, endpoint_name, headers, bod
         keycloak_http_timeouts["read_timeout"]
     )
 
+    -- TODO: do we need to do anything with httpc proxy here for proxied servers?
 
     local httpc_params = {
         method     = method,
@@ -289,7 +309,7 @@ local function keycloak_call_endpoint(endpoint_type, endpoint_name, headers, bod
     }
 
     local res, err = httpc:request_uri(endpoint_url, httpc_params)
-
+    -- check for HTTP client errors
     if err then
         ngx.status = 500
         log(ERROR, "Error calling endpoint " .. endpoint_name .. ": " .. err)
@@ -300,6 +320,11 @@ local function keycloak_call_endpoint(endpoint_type, endpoint_name, headers, bod
     return cjson_s.decode(res.body), err
 end
 
+-- request an authorization decision from Keycloak
+-- access_token (string) : access_token from session of logged-in user (eg. session.data.access_token)
+-- resource_id (string)  : the ID (not the name!) of the Keycloak UMA2 resource
+--
+-- returns the raw response to the caller
 local function keycloak_get_decision(access_token, resource_id)
     local endpoint_name = "token_endpoint"
     local endpoint_type = "uma2"
@@ -373,9 +398,11 @@ local function keycloak_resources()
     -- TODO: cache
 
     local resources = keycloak_get_resources()
+
     return resources
 end
 
+-- this global has to be declared here; after all of the required functions are defined, and before keycloak_openidc_opts()
 local keycloak_openidc_defaults = {
     redirect_uri  = "/callback",
     discovery     = keycloak_discovery_url("openid"),
@@ -383,6 +410,7 @@ local keycloak_openidc_defaults = {
     client_secret = keycloak_config()["credentials"]["secret"]
 }
 
+-- generate the required opts table for resty.openidc calls
 local function keycloak_openidc_opts(openidc_opts)
     local openidc_opts = openidc_opts or {}
 
