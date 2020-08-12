@@ -234,7 +234,12 @@ local function keycloak_call_endpoint(endpoint_type, endpoint_name, headers, bod
         params_string = '/' .. param
     end
 
-    -- TODO: check that we have an endpoint for this
+    -- abort if the discovery doc is missing endpoint_name
+    if discovery[endpoint_name] == nil then
+        ngx.status = 500
+        log(ERROR, "Discovery document type \"" .. endpoint_type .. "\" missing enpoint name \"" .. endpoint_name .. "\"")
+        ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
+    end
     local endpoint_url = discovery[endpoint_name] .. params_string
 
     -- make sure form content type is set for POST method
