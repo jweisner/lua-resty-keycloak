@@ -317,8 +317,15 @@ local function keycloak_call_endpoint(endpoint_type, endpoint_name, headers, bod
         ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
     end
 
-    -- TODO: check for json decode errors
-    return cjson_s.decode(res.body), err
+    local decoded,decode_err = cjson_s.decode(res.body)
+    -- check for json decode errors
+    if decode_err then
+        ngx.status = 500
+        log(ERROR, "Error decoding JSON response from Keycloak \"" .. endpoint_name .. "\": " .. decode_err)
+        ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
+    end
+
+    return decoded
 end
 
 -- request an authorization decision from Keycloak
