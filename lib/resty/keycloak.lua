@@ -378,6 +378,7 @@ local function keycloak_resource_set()
     -- TODO: cache
 
     local resource_set = keycloak_get_resource_set()
+    assert(type(resource_set) == "table")
 
     return resource_set
 end
