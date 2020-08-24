@@ -605,6 +605,19 @@ function keycloak.dumpTable(table, depth)
     return debug_out
 end
 
+--[[
+    Gets the authorization decision for a given access token to access a resource ID
+
+    access_token (string): end-user access token from openidc session
+    resource_id  (string): resource ID to evaluate permissions
+
+    returns a table with keycloak's response if the user is authorized:
+    {
+        'result': true
+    }
+
+    returns false if user is denied access
+--]]
 function keycloak.decision(access_token, resource_id)
     assert(type(access_token) == "string")
     assert(type(resource_id)  == "string")
