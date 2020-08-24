@@ -540,10 +540,12 @@ local function keycloak_resourceid_for_request(request_uri,request_method)
     return found,found_depth
 end
 
------------
--- Public Functions
+--[[
+    fetch the service account token from Keycloak for the client application
 
-function keycloak.service_account_token()
+    returns the SA access token as a string
+--]]
+local function keycloak_get_service_account_token()
     local endpoint_name = "token_endpoint"
     local endpoint_type = "openid"
     local config        = keycloak_config()
@@ -564,7 +566,29 @@ function keycloak.service_account_token()
     return res.access_token
 end
 
--- DEBUG only
+-----------
+-- Public Functions
+
+--[[
+    returns the SA access token as a string
+--]]
+function keycloak.service_account_token()
+    -- TODO: cache
+
+    local access_token = keycloak_get_service_account_token()
+    assert(type(access_token) == "string")
+
+    return access_token
+end
+
+--[[
+    Converts a table (possibly nested) into a string for display or debug logging
+
+    table (table)   : from keycloak_realm_discovery_endpoints
+    depth (interger): indent level (default = 0)
+
+    returns a human-readble string representation of the table input
+--]]
 function keycloak.dumpTable(table, depth)
     local depth = depth or 0
     local debug_out = ""
