@@ -319,9 +319,8 @@ local function keycloak_call_endpoint(endpoint_type, endpoint_name, headers, bod
     local res, err = httpc:request_uri(endpoint_url, httpc_params)
     -- check for HTTP client errors
     if err then
-        ngx.status = 500
         log(ERROR, "Error calling endpoint " .. endpoint_name .. ": " .. err)
-        ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
+        return nil,err
     end
 
     local decoded,decode_err = cjson_s.decode(res.body)
@@ -332,7 +331,7 @@ local function keycloak_call_endpoint(endpoint_type, endpoint_name, headers, bod
         ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
     end
 
-    return decoded
+    return decoded,err
 end
 
 -- request an authorization decision from Keycloak
@@ -360,8 +359,12 @@ local function keycloak_get_decision(access_token, resource_id)
         response_mode = "decision"
     }
 
-    local res = keycloak_call_endpoint(endpoint_type, endpoint_name, headers, body)
-    return res
+    -- TODO validate what happens here with permission denied. KC will return 403?
+    local res,err = keycloak_call_endpoint(endpoint_type, endpoint_name, headers, body)
+
+    -- TODO: handle err here or in wrapper?
+
+    return res,err
 end
 
 local function keycloak_get_resource_set()
@@ -372,6 +375,9 @@ local function keycloak_get_resource_set()
     local method        = "GET"
     local params        = {}
     local resource_set  = keycloak_call_endpoint(endpoint_type, endpoint_name, headers, body, params, method)
+    local resource_set,err  = keycloak_call_endpoint(endpoint_type, endpoint_name, headers, body, params, method)
+
+    -- TODO: handle err
 
     return resource_set
 end
@@ -392,7 +398,9 @@ local function keycloak_get_resource(resource_id)
     local body          = {}
     local params        = { resource_id }
     local method        = "GET"
-    local resource      = keycloak_call_endpoint(endpoint_type, endpoint_name, headers, body, params, method)
+    local resource,err  = keycloak_call_endpoint(endpoint_type, endpoint_name, headers, body, params, method)
+
+    -- TODO: handle err
 
     return resource
 end
@@ -579,10 +587,11 @@ function keycloak.decision(access_token, resource_id)
     assert(type(resource_id)  == "string")
 
     -- TODO: cache
-    local decision = keycloak_get_decision(access_token, resource_id)
-    assert(type(decision) == "table")
+    local decision,err = keycloak_get_decision(access_token, resource_id)
 
-    return decision
+    -- TODO: handle err... not sure when KC is allowed to return 403
+
+    return decision,err
 end
 
 function keycloak.authenticate(openidc_opts)
