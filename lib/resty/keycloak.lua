@@ -563,6 +563,13 @@ local function keycloak_get_service_account_token()
         ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
     end
 
+    -- make sure the response has an access token
+    if type(res.access_token) ~= "string" then
+        ngx.status = 500
+        log(ERROR, "No SA access token in response")
+        ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
+    end
+
     return res.access_token
 end
 
