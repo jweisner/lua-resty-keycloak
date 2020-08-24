@@ -655,6 +655,7 @@ end
 
 function keycloak.authorize(session_token)
     -- TODO: authorization may not be enabled for the resource
+
     -- catch empty access token
     if session_token == nil then
         ngx.status = 403
@@ -668,6 +669,8 @@ function keycloak.authorize(session_token)
     log(DEBUG, "Matching URI with Keycloak resources")
     local resource_id = keycloak_resourceid_for_request()
 
+    -- this defines the default policy. We are denying access to anything that doesn't match a resource in KeyCloak
+    -- TODO: this should be based on the "enforcing" mode in KeyCloak
     -- forbidden if no matching resources found
     if resource_id == nil then
         ngx.status = 403
@@ -675,8 +678,12 @@ function keycloak.authorize(session_token)
         ngx.exit(ngx.HTTP_FORBIDDEN)
     end
 
+    -- we have a resource match
     log(DEBUG, "Matched resource ID: " .. resource_id)
-    local decision = keycloak.decision(session_token,resource_id)
+
+    -- TODO: cache session_token,resource_id,decision
+    local decision,decision_err = keycloak.decision(session_token,resource_id)
+    -- TODO: decision request will return 403 error if no permissions mapped to resource!
 
     -- catch decision unexpected return type
     if type(decision) ~= "table" then
