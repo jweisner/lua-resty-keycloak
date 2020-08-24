@@ -397,12 +397,22 @@ local function keycloak_get_resource(resource_id)
     return resource
 end
 
+local function keycloak_resource(resource_id)
+    assert(type(resource_id) == "string")
+
+    -- TODO: cache
+    local resource = keycloak_get_resource(resource_id)
+    assert(type(resource) == "table")
+
+    return resource
+end
+
 local function keycloak_get_resources()
     local resource_set = keycloak_resource_set()
     local resources    = {}
 
     for k,resource_id in ipairs(resource_set) do
-        resources[resource_id] = keycloak_get_resource(resource_id)
+        resources[resource_id] = keycloak_resource(resource_id)
     end
 
     return resources
