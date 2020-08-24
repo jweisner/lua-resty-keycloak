@@ -549,6 +549,7 @@ function keycloak.service_account_token()
     return res.access_token
 end
 
+-- DEBUG only
 function keycloak.dumpTable(table, depth)
     local depth = depth or 0
 
