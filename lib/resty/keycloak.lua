@@ -599,6 +599,9 @@ function keycloak.authorize(session_token)
         ngx.exit(ngx.HTTP_FORBIDDEN)
     end
 
+    -- session_token is not null: check type
+    assert(type(session_token) == "string")
+
     log(DEBUG, "Matching URI with Keycloak resources")
     local resource_id = keycloak_resourceid_for_request()
 
