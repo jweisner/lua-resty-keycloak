@@ -564,15 +564,14 @@ function keycloak.dumpTable(table, depth)
 end
 
 function keycloak.decision(access_token, resource_id)
-    local decision
-    local err
     assert(type(access_token) == "string")
     assert(type(resource_id)  == "string")
 
     -- TODO: cache
-    decision,err = keycloak_get_decision(access_token, resource_id)
-    -- TODO: error out here?
-    return decision,err
+    local decision = keycloak_get_decision(access_token, resource_id)
+    assert(type(decision) == "table")
+
+    return decision
 end
 
 function keycloak.authenticate(openidc_opts)
