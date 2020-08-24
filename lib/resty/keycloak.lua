@@ -76,6 +76,8 @@ end
 -----------
 -- Private Functions
 
+-- TODO: new function to determine whether Authz is enableed for resource
+
 -- loads the Keycloak-generated keycloak.json from disk
 local function keycloak_load_config(config_path)
     -- TODO: remove keycloak.json file support?
