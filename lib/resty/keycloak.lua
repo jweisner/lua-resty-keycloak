@@ -649,6 +649,5 @@ end
 
 -----------
 -- Bless keycloak table as object
-
 keycloak.__index = keycloak
 return keycloak
