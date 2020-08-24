@@ -368,13 +368,12 @@ local function keycloak_get_decision(access_token, resource_id)
 end
 
 local function keycloak_get_resource_set()
-    local endpoint_type = "uma2"
-    local endpoint_name = "resource_registration_endpoint"
-    local headers       = { Authorization = "Bearer " .. keycloak.service_account_token() }
-    local body          = {}
-    local method        = "GET"
-    local params        = {}
-    local resource_set  = keycloak_call_endpoint(endpoint_type, endpoint_name, headers, body, params, method)
+    local endpoint_type     = "uma2"
+    local endpoint_name     = "resource_registration_endpoint"
+    local headers           = { Authorization = "Bearer " .. keycloak.service_account_token() }
+    local body              = {}
+    local method            = "GET"
+    local params            = {}
     local resource_set,err  = keycloak_call_endpoint(endpoint_type, endpoint_name, headers, body, params, method)
 
     -- TODO: handle err
