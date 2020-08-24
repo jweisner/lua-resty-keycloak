@@ -377,7 +377,7 @@ end
 local function keycloak_resource_set()
     -- TODO: cache
 
-    local resource_set,err = keycloak_get_resource_set()
+    local resource_set = keycloak_get_resource_set()
 
     return resource_set
 end
