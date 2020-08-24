@@ -338,7 +338,7 @@ end
 -- access_token (string) : access_token from session of logged-in user (eg. session.data.access_token)
 -- resource_id (string)  : the ID (not the name!) of the Keycloak UMA2 resource
 --
--- returns the raw response to the caller
+-- returns response body table and error string from KeyCloak
 local function keycloak_get_decision(access_token, resource_id)
     assert(type(access_token) == "string")
     assert(type(resource_id)  == "string")
