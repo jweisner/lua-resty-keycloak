@@ -110,7 +110,7 @@ end
 -- returns the base URL for the configured Keycloak realm
 local function keycloak_realm_url()
     local config          = keycloak_config()
-    assert(type(config) == "table")
+    assert(type(config)   == "table")
 
     local auth_server_url = config["auth-server-url"]
     -- make sure the auth server url ends in /
