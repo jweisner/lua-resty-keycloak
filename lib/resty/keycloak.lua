@@ -138,6 +138,7 @@ end
 -- This function is copied from resty.openidc
 -- set value in server-wide cache if available
 local function keycloak_cache_set(type, key, value, exp)
+    -- TODO: redis integration
     local dict = ngx.shared[type]
     if dict and (exp > 0) then
         local success, err, forcible = dict:set(key, value, exp)
@@ -148,6 +149,7 @@ end
 -- This function is copied from resty.openidc
 -- retrieve value from server-wide cache if available
 local function keycloak_cache_get(type, key)
+    -- TODO: redis integration
     local dict = ngx.shared[type]
     local value
     if dict then
@@ -160,6 +162,7 @@ end
 -- This function is copied from resty.openidc
 -- invalidate values of server-wide cache
 local function keycloak_cache_invalidate(type)
+    -- TODO: redis integration
     local dict = ngx.shared[type]
     if dict then
         log(DEBUG, "flushing cache for " .. type)
@@ -572,6 +575,7 @@ function keycloak.invalidate_caches()
 end
 
 function keycloak.authorize(session_token)
+    -- TODO: authorization may not be enabled for the resource
     -- catch empty access token
     if session_token == nil then
         ngx.status = 403
