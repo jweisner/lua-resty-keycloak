@@ -560,15 +560,18 @@ end
 -- DEBUG only
 function keycloak.dumpTable(table, depth)
     local depth = depth or 0
+    local debug_out = ""
 
     for k,v in pairs(table) do
         if (type(v) == "table") then
-            ngx.say(string.rep("  ", depth) .. k .. ":")
+            debug_out = debug_out .. string.rep("  ", depth) .. k .. ":" .. "\n"
             keycloak.dumpTable(v, depth+1)
         else
-            ngx.say(string.rep("  ", depth) .. k .. ": ",v)
+            debug_out = debug_out .. string.rep("  ", depth) .. k .. ": " .. v .. "\n"
         end
     end
+
+    return debug_out
 end
 
 function keycloak.decision(access_token, resource_id)
