@@ -621,13 +621,8 @@ function keycloak.authorize(session_token)
     end
 
     log(DEBUG, "Matched resource ID: " .. resource_id)
-    local decision,err = keycloak.decision(session_token,resource_id)
-    -- catch decision internal error
-    if err then
-        ngx.status = 500
-        log(ERROR, "Error fetching keycloak decision: " .. err)
-        ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
-    end
+    local decision = keycloak.decision(session_token,resource_id)
+
     -- catch decision unexpected return type
     if type(decision) ~= "table" then
         ngx.status = 500
