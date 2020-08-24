@@ -546,6 +546,13 @@ function keycloak.service_account_token()
 
     local res, err = keycloak_call_endpoint(endpoint_type, endpoint_name, {}, body)
 
+    -- check for SA token error
+    if err then
+        ngx.status = 500
+        log(ERROR, "Error calling endpoint " .. endpoint_name .. ": " .. err)
+        ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
+    end
+
     return res.access_token
 end
 
