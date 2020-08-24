@@ -78,6 +78,7 @@ end
 
 -- loads the Keycloak-generated keycloak.json from disk
 local function keycloak_load_config(config_path)
+    -- TODO: remove keycloak.json file support?
     config_path = config_path or ngx.config.prefix() .. "/conf/keycloak.json"
 
     local file, err = io.open(config_path, "rb")
@@ -99,8 +100,7 @@ end
 -- this file is generated in Keycloak, downloadable in the client "Installation" tab
 -- "Keycloak OIDC JSON" format option
 local function keycloak_config(config_path)
-    -- TODO config_path needs to some from a global
-    local config_path = config_path or nil
+    -- TODO all Keycloak config may come from ENV settings
 
     -- TODO: cache keycloak.json
     local config = keycloak_load_config(config_path)
