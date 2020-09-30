@@ -4,6 +4,7 @@ local cjson_s   = require("cjson.safe")
 local http      = require("resty.http")
 local r_session = require("resty.session")
 local openidc   = require("resty.openidc")
+local redis     = require("resty.redis")
 local string    = string
 local ipairs    = ipairs
 local pairs     = pairs
