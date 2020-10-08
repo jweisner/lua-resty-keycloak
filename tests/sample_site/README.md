@@ -19,4 +19,4 @@ git clone https://github.com/budparr/gohugo-theme-ananke.git themes/ananke
 hugo -D
 ```
 
-The generated site will be in the `public` subdirectory.
+The generated site will be in the `public` subdirectory. This can be mapped to `/application` in the Nginx container.
