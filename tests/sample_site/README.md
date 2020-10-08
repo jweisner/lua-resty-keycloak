@@ -18,3 +18,5 @@ git clone https://github.com/budparr/gohugo-theme-ananke.git themes/ananke
 ```bash
 hugo -D
 ```
+
+The generated site will be in the `public` subdirectory.
