@@ -17,7 +17,7 @@ function dumpTable(table, depth)
     return debug_out
 end
 
--- create an array of asterixes in the pattern
+-- create an array of asterisks in the pattern
 local stars = {}
 local i = 0
 while true do
