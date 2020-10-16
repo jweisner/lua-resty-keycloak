@@ -22,9 +22,8 @@ local stars = {}
 local i = 0
 while true do
 	i = string.find(test, '*', i+1)
-	if i ==nil then break end
+	if i == nil then break end
 	table.insert(stars,i)
 end
 
 local test_expanded = ''
-
