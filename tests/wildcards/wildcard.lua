@@ -1,19 +1,3 @@
-function dumpTable(table, depth)
-    local depth = depth or 0
-    local debug_out = ""
-
-    for k,v in pairs(table) do
-        if (type(v) == "table") then
-            debug_out = debug_out .. string.rep("  ", depth) .. k .. ":" .. "\n"
-            dumpTable(v, depth+1)
-        else
-            debug_out = debug_out .. string.rep("  ", depth) .. k .. ": " .. v .. "\n"
-        end
-    end
-
-    return debug_out
-end
-
 -- return the match depth or nil if not found
 local function keycloak_uri_path_match(subject, test)
     local subject = subject or ""
