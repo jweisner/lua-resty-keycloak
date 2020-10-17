@@ -29,7 +29,7 @@ local function keycloak_uri_path_match(subject, test)
 
 end
 
-local subjects = {
+local test_subjects = {
     '/',
     '/about.html',
     '/about/',
