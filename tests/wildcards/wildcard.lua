@@ -18,15 +18,27 @@ local function keycloak_uri_path_match(subject, test)
         return 1
     end
 
-    -- create an array of asterixes in the pattern
-    local stars = {}
-    local i = 0
-    while true do
-        i = string.find(test, '*', i+1)
-        if i ==nil then break end
-        table.insert(stars,i)
-    end
+    -- wildcard match depth is the number of characters matched without wildcard expansion
+    local test_depth = string.len(string.gsub(test,"[?*]",""))
 
+    -- Convert globs to lua patterns
+    -- ... escape all .
+    test = string.gsub(test, "%.", "\\.")
+    -- ... replace all ? with .
+    test = string.gsub(test, "%?", '.')
+    -- ... replace all * with .*
+    test = string.gsub(test, "%*", ".+")
+
+    -- get the beginning and end positions in the subject string that match the test
+    local start_match, end_match = string.find(subject, test)
+    -- it's only a match if it's the whole string (1 to length)
+    if start_match == 1 and end_match == string.len(subject) then
+        -- match successful, return the number of non-wildcard characters in the test as a "match quality rating"
+        return test_depth
+    else
+        -- match failed
+        return nil
+    end
 end
 
 local test_subjects = {
