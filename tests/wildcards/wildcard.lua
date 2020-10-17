@@ -9,7 +9,7 @@ local function keycloak_uri_path_match(subject, test)
     end
 
     -- if the pattern has no wildcards, stop here
-    if string.find(test, '*') == nil then
+    if string.find(test, "[?*]") == nil then
         return nil
     end
 
