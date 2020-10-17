@@ -77,3 +77,16 @@ local test_patterns = {
     '/*/about/*',
     '/*/secrets/*',
 }
+
+for i,subject in ipairs(test_subjects) do
+    print("Subject: "..subject)
+    for k,test_pattern in ipairs(test_patterns) do
+        local match_depth = keycloak_uri_path_match(subject, test_pattern)
+        if match_depth == nil then
+            print(test_pattern.. " no match")
+        else
+            print(test_pattern.." match at depth "..match_depth)
+        end
+    end
+    print()
+end
