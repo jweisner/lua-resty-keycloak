@@ -26,7 +26,7 @@ local function keycloak_uri_path_match(subject, test)
     test = string.gsub(test, "%.", "\\.")
     -- ... replace all ? with .
     test = string.gsub(test, "%?", '.')
-    -- ... replace all * with .*
+    -- ... replace all * with .+
     test = string.gsub(test, "%*", ".+")
 
     -- get the beginning and end positions in the subject string that match the test
