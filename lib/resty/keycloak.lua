@@ -674,14 +674,17 @@ function keycloak.invalidate_caches()
     end
 end
 
+-- checks authorization for the resource
+-- returns ngx.HTTP_OK (200) for authorized users
+-- returns ngx.HTTP_FORBIDDEN (403) for unauthorized users
+-- stops execution on errors
 function keycloak.authorize(session_token)
     -- TODO: authorization may not be enabled for the resource
 
     -- catch empty access token
     if session_token == nil then
-        ngx.status = 403
         log(ERROR, "Session token is nil: access forbidden.")
-        ngx.exit(ngx.HTTP_FORBIDDEN)
+        return ngx.HTTP_FORBIDDEN
     end
 
     -- session_token is not null: check type
@@ -694,9 +697,8 @@ function keycloak.authorize(session_token)
     -- TODO: this should be based on the "enforcing" mode in KeyCloak
     -- forbidden if no matching resources found
     if resource_id == nil then
-        ngx.status = 403
         log(ERROR, "No matching resources: access forbidden.")
-        ngx.exit(ngx.HTTP_FORBIDDEN)
+        return ngx.HTTP_FORBIDDEN
     end
 
     -- we have a resource match
@@ -714,9 +716,8 @@ function keycloak.authorize(session_token)
     end
     -- catch authorization error (eg. not authorized)
     if decision.error ~= nil then
-        ngx.status = 403
         log(ERROR, "Keycloak returned authorization error: " .. cjson_s.encode(decision))
-        ngx.exit(ngx.HTTP_FORBIDDEN)
+        return ngx.HTTP_FORBIDDEN
     end
     -- catch unknown Keycloak response
     if decision.result ~= true then
@@ -727,7 +728,7 @@ function keycloak.authorize(session_token)
 
     log(DEBUG, "Keycloak authorization successful.")
     -- authz successful
-    return true
+    return ngx.HTTP_OK
 end
 
 -----------
