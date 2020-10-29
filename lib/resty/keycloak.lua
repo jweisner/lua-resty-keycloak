@@ -201,7 +201,7 @@ local function keycloak_get_discovery_doc(endpoint_type)
     end
 
     -- TODO: check for json decode errors
-    -- TODO: displays HTML source here is keycloak not running! ("could not decode JSON from Discovery data:"). This should be fixed by checking for a valid decode
+    -- TODO: displays HTML source here if keycloak not running! ("could not decode JSON from Discovery data:"). This should be fixed by checking for a valid decode
     return cjson_s.decode(res.body), err
 end
 
