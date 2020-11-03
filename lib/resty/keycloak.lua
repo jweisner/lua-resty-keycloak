@@ -209,16 +209,17 @@ local function keycloak_get_discovery(endpoint_type)
     )
 
     local res,err = httpc:request_uri(discovery_url, httpc_params)
-    if err then
-        ngx.status = 500
-        ngx.log(ngx.ERROR, "Error fetching " .. endpoint_type .. " discovery at " .. discovery_url .. " : " .. err)
-        ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
-    end
 
     -- check the HTTP response code from the discovery request
     if res.status ~= 200 then
         ngx.status = 500
         ngx.log(ngx.ERROR, "Error fetching " .. endpoint_type .. " discovery at " .. discovery_url .. " : " .. "code:" .. res.status .. " reason: " .. res.reason)
+        ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
+    end
+
+    if err then
+        ngx.status = 500
+        ngx.log(ngx.ERROR, "Error fetching " .. endpoint_type .. " discovery at " .. discovery_url .. " : " .. err)
         ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
     end
 
