@@ -181,7 +181,7 @@ local function keycloak_cache_invalidate(type)
 end
 
 -- fetch the OpenID discovery document for the given endpoint type
-local function keycloak_get_discovery_doc(endpoint_type)
+local function keycloak_get_discovery(endpoint_type)
     assert(type(endpoint_type) == "string")
 
     local httpc         = http.new()
@@ -236,7 +236,7 @@ local function keycloak_discovery(endpoint_type)
     end
 
     -- TODO: cache
-    local discovery = keycloak_get_discovery_doc(endpoint_type)
+    local discovery = keycloak_get_discovery(endpoint_type)
 
     return discovery
 end
