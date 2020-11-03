@@ -718,21 +718,21 @@ function keycloak.authorize()
     local session = r_session.open()
 
     if session.present == nil then
-        log(ngx.DEBUG, "No session present: access forbidden.")
+        ngx.log(ngx.DEBUG, "No session present: access forbidden.")
         return ngx.HTTP_FORBIDDEN
     end
 
     local session_token = session.data.access_token
     -- catch empty access token
     if session_token == nil then
-        log(ngx.ERROR, "Session token is nil: access forbidden.")
+        ngx.log(ngx.ERROR, "Session token is nil: access forbidden.")
         return ngx.HTTP_FORBIDDEN
     end
 
     -- session_token is not null: check type
     assert(type(session_token) == "string")
 
-    log(ngx.DEBUG, "Matching URI with Keycloak resources")
+    ngx.log(ngx.DEBUG, "Matching URI with Keycloak resources")
     local resource_id = keycloak_resourceid_for_request()
 
     -- this defines the default policy for logged-in users.
@@ -740,12 +740,12 @@ function keycloak.authorize()
     -- TODO: this should be based on the "enforcing" mode in KeyCloak
     -- forbidden if no matching resources found
     if resource_id == nil then
-        log(ngx.ERROR, "No matching resources: access forbidden.")
+        ngx.log(ngx.ERROR, "No matching resources: access forbidden.")
         return ngx.HTTP_FORBIDDEN
     end
 
     -- we have a resource match
-    log(ngx.DEBUG, "Matched resource ID: " .. resource_id)
+    ngx.log(ngx.DEBUG, "Matched resource ID: " .. resource_id)
 
     -- TODO: cache session_token,resource_id,decision
     local decision,decision_err = keycloak.decision(session_token,resource_id)
@@ -754,22 +754,22 @@ function keycloak.authorize()
     -- catch decision unexpected return type
     if type(decision) ~= "table" then
         ngx.status = 500
-        log(ngx.ERROR, "Unexpected Keycloak decision return data type: " .. type(decision))
+        ngx.log(ngx.ERROR, "Unexpected Keycloak decision return data type: " .. type(decision))
         ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
     end
     -- catch authorization error (eg. not authorized)
     if decision.error ~= nil then
-        log(ngx.ERROR, "Keycloak returned authorization error: " .. cjson_s.encode(decision))
+        ngx.log(ngx.ERROR, "Keycloak returned authorization error: " .. cjson_s.encode(decision))
         return ngx.HTTP_FORBIDDEN
     end
     -- catch unknown Keycloak response
     if decision.result ~= true then
         ngx.status = 500
-        log(ngx.ERROR, "Unexpected Keycloak decision content: " .. cjson_s.encode(decision))
+        ngx.log(ngx.ERROR, "Unexpected Keycloak decision content: " .. cjson_s.encode(decision))
         ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
     end
 
-    log(ngx.DEBUG, "Keycloak authorization successful.")
+    ngx.log(ngx.DEBUG, "Keycloak authorization successful.")
     -- authz successful
     return ngx.HTTP_OK
 end
