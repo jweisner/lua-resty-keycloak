@@ -535,7 +535,7 @@ local function keycloak_resourceid_for_request(request_uri,request_method)
     for resource_id,resource in pairs(resources) do
         ngx.log(ngx.DEBUG, "Trying resource: \"" .. resource.name .. "\"")
 
-        local next            = next -- scope searching speed hack
+        local next            = next -- Lua scope searching speed hack
         local resource_scopes = keycloak_scopes_to_lookup_table(resource.resource_scopes)
 
         local resource_scopes_empty = false
