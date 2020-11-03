@@ -542,6 +542,7 @@ local function keycloak_resourceid_for_request(request_uri,request_method)
 
         local resource_scope_matches = resource_scopes[keycloak_scope] or false
 
+        -- TODO: this doesn't work... the scopes aren't empty if they match... wtf?
         if resource_scope_matches then
             ngx.log(ngx.DEBUG, "Resource: \"" .. resource.name .. "\": found matching scope.")
             resource_scopes_empty = true
