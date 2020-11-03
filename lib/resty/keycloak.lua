@@ -514,7 +514,6 @@ end
 
 -- return the resource_id for the deepest match of uris for the given uri
 -- returns nil if none found
--- TODO: this needs to handle simple wildcards
 local function keycloak_resourceid_for_request(request_uri,request_method)
     local request_uri    = request_uri or ngx.var.request_uri
     local request_method = request_method or ngx.req.get_method()
