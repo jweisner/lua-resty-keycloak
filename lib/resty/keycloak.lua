@@ -217,15 +217,9 @@ local function keycloak_discovery(endpoint_type)
     end
 
     -- TODO: cache
-    local discovery, err = keycloak_get_discovery_doc(endpoint_type)
+    local discovery = keycloak_get_discovery_doc(endpoint_type)
 
-    if err then
-        ngx.status = 500
-        log(ERROR, "Error getting keycloak discovery: " .. err)
-        ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
-    else
-        return discovery, nil
-    end
+    return discovery
 end
 
 -- converts HTTP method into Keycloak scope or "extended" if unknown
