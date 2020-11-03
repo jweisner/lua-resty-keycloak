@@ -699,9 +699,17 @@ end
 -- returns ngx.HTTP_OK (200) for authorized users
 -- returns ngx.HTTP_FORBIDDEN (403) for unauthorized users
 -- stops execution on errors
-function keycloak.authorize(session_token)
+function keycloak.authorize()
     -- TODO: authorization may not be enabled for the resource
 
+    local session = r_session.open()
+
+    if session.present == nil then
+        log(DEBUG, "No session present: access forbidden.")
+        return ngx.HTTP_FORBIDDEN
+    end
+
+    local session_token = session.data.access_token
     -- catch empty access token
     if session_token == nil then
         log(ERROR, "Session token is nil: access forbidden.")
