@@ -19,6 +19,7 @@ local keycloak = {
 
 -- default configuration
 local keycloak_default_config = {
+    public_access_scope = "read-public",
 }
 
 -- list of all caches used in this code
