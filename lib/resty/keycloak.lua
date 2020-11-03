@@ -342,6 +342,7 @@ local function keycloak_call_endpoint(endpoint_type, endpoint_name, headers, bod
     }
 
     local res, err = httpc:request_uri(endpoint_url, httpc_params)
+    -- TODO: check response HTTP error code
     -- check for HTTP client errors
     if err then
         ngx.log(ngx.ERROR, "Error calling endpoint " .. endpoint_name .. ": " .. err)
