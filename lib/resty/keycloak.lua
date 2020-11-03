@@ -95,7 +95,13 @@ local function keycloak_load_config(config_path)
     file:close()
 
     local json = cjson.decode(data_json)
-    -- TODO: check for JSON decode error
+    -- check for JSON decode error
+    if json == nil then
+        ngx.status = 500
+        log(ERROR, "Error loading keycloak json config: JSON decode error")
+        ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
+    end
+
     return json
 end
 
