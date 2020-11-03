@@ -352,7 +352,7 @@ local function keycloak_call_endpoint(endpoint_type, endpoint_name, headers, bod
     -- check for json decode errors
     if decoded == nil then
         ngx.status = 500
-        ngx.log(ngx.ERROR, "Error decoding JSON response from Keycloak \"" .. endpoint_name .. "\": " .. decode_err)
+        ngx.log(ngx.ERROR, "Error decoding JSON response from Keycloak \"" .. endpoint_name .. "\"")
         ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
     end
 
