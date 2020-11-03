@@ -50,14 +50,14 @@ local keycloak_method_scope_map = {
     POST    = "write",
     PUT     = "write",
     CONNECT = "debug",
-    TRACE   = "debug"
+    TRACE   = "debug",
 }
 
 -- timeouts used for httpc client calls (in milliseconds)
 local keycloak_http_timeouts = {
     connect_timeout = 10000,
     send_timeout    = 5000,
-    read_timeout    = 5000
+    read_timeout    = 5000,
 }
 
 -----------
