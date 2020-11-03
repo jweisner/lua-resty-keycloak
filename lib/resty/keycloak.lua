@@ -463,6 +463,7 @@ end
 
 -- this global has to be declared here; after all of the required functions are defined, and before keycloak_openidc_opts()
 local keycloak_openidc_defaults = {
+    -- TODO: callback URI needs to be configurable
     redirect_uri  = "/callback",
     discovery     = keycloak_discovery_url("openid"),
     client_id     = keycloak_config()["resource"],
