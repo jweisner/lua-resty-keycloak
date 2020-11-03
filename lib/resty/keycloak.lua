@@ -677,6 +677,14 @@ function keycloak.authenticate(openidc_opts)
     local opts                          = keycloak_openidc_opts(openidc_opts)
     local res, err, target_url, session = openidc.authenticate(opts)
 
+    if err ~= nil then
+        ngx.status = 500
+        ngx.log(ERROR, "openidc.authenticate() returned error: " .. err)
+        ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
+    end
+
+    err = ngx.HTTP_OK
+
     return res, err, target_url, session
 end
 
@@ -706,7 +714,8 @@ function keycloak.authorize(session_token)
     log(DEBUG, "Matching URI with Keycloak resources")
     local resource_id = keycloak_resourceid_for_request()
 
-    -- this defines the default policy. We are denying access to anything that doesn't match a resource in KeyCloak
+    -- this defines the default policy for logged-in users.
+    -- We are denying access to anything that doesn't match a resource in KeyCloak.
     -- TODO: this should be based on the "enforcing" mode in KeyCloak
     -- forbidden if no matching resources found
     if resource_id == nil then
