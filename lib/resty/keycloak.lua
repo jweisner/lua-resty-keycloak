@@ -206,12 +206,18 @@ local function keycloak_get_discovery_doc(endpoint_type)
         ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
     end
 
-    -- TODO: check for json decode errors
-    -- TODO: displays HTML source here if keycloak not running! ("could not decode JSON from Discovery data:"). This should be fixed by checking for a valid decode
     -- check the HTTP response code from the discovery request
     if res.status ~= 200 then
         ngx.status = 500
         log(ERROR, "Error fetching " .. endpoint_type .. " discovery at " .. discovery_url .. " : " .. "code:" .. res.status .. " reason: " .. res.reason)
+        ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
+    end
+
+    -- check for json decode errors
+    local discovery_decoded = cjson_s.decode(res.body)
+    if discovery_decoded == nil then
+        ngx.status = 500
+        log(ERROR, "Invalid JSON decoding " .. endpoint_type .. " discovery at " .. discovery_url)
         ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
     end
 
