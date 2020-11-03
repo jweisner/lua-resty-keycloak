@@ -40,7 +40,7 @@ local keycloak_realm_discovery_endpoints = {
 
 -- this hash maps HTTP method to Keycloak scope
 -- these scopes can be added to resources in Keycloak to limit authz rules to HTTP methods
-local keycloak_scope_map = {
+local keycloak_method_scope_map = {
     GET     = "view",
     HEAD    = "view",
     OPTIONS = "view",
@@ -248,8 +248,8 @@ local function keycloak_scope_for_method(method)
     local scope = "extended" -- this scope is returned for unknown HTTP methods (eg. WebDAV)
 
     -- if we have mapped the HTTP request method to a Keycloak scope, use that
-    if keycloak_scope_map[method] ~= nil then
-        scope = keycloak_scope_map[method]
+    if keycloak_method_scope_map[method] ~= nil then
+        scope = keycloak_method_scope_map[method]
     end
 
     return scope
