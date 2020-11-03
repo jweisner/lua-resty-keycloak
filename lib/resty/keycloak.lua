@@ -27,6 +27,7 @@ local keycloak_default_config = {
 local keycloak_caches = {
     "keycloak_config",
     "keycloak_discovery",
+    "resource_set",
     -- add any other caches we use here
 }
 
