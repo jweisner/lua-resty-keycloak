@@ -545,29 +545,31 @@ local function keycloak_resourceid_for_request(request_uri,request_method)
     for resource_id,resource in pairs(resources) do
         ngx.log(ngx.DEBUG, "Trying resource: \"" .. resource.name .. "\"")
 
-        local next            = next -- Lua scope searching speed hack
         local resource_scopes = keycloak_scopes_to_lookup_table(resource.resource_scopes)
 
-        local resource_scopes_empty = false
-        if next(resource_scopes) == nil then
-            ngx.log(ngx.DEBUG, "Resource: \"" .. resource.name .. "\": scopes empty.")
-            resource_scopes_empty = true
+        -- search for any method scopes (scopes mapped to HTTP methods)
+        -- if there are any associated method scopes, the request method must match
+        local resource_has_method_scopes = true
+        for _,scope in pairs(resource_scopes) do -- for each associated scope...
+            -- check if this scope in the table of method scopes
+            if keycloak_table_has_value(keycloak_method_scope_map,scope) ~= nil then
+                ngx.log(ngx.DEBUG, "Found resource scopes in resource: " .. resource.name)
+            end
+            resource_has_method_scopes = false
         end
 
-        local resource_scope_matches = resource_scopes[keycloak_scope] or false
-
-        -- TODO: this doesn't work... the scopes aren't empty if they match... wtf?
-        if resource_scope_matches then
-            ngx.log(ngx.DEBUG, "Resource: \"" .. resource.name .. "\": found matching scope.")
-            resource_scopes_empty = true
+        -- check if the request scope is in the associated resource scopes
+        local resource_scopes_include_request_method = false
+        if resource_scopes[keycloak_scope] ~= nil then
+            resource_scopes_include_request_method = true
+            ngx.log(ngx.DEBUG, "Resource: \"" .. resource.name .. "\": found matching scope: " .. keycloak_scope)
         else
             ngx.log(ngx.DEBUG, "Resource: \"" .. resource.name .. "\": no matching scopes.")
-            resource_scopes_empty = true
         end
 
-        -- only test the resource URIs if the method matches the resource scope
+        -- only test the resource URIs if the request method matches the resource scope
         -- or the resource doesn't list any associated scopes
-        if resource_scopes_empty or resource_scope_matches then
+        if resource_scopes_include_request_method or (resource_has_method_scopes == false) then
             ngx.log(ngx.DEBUG, "Testing resource: \"" .. resource.name .. "\": matching resource scope or scopes empty.")
             for _,uri in ipairs(resource.uris) do
                 local match_depth = keycloak_uri_path_match(request_uri,uri) or 0
