@@ -17,6 +17,10 @@ local keycloak = {
     _VERSION = "0.0.1"
 }
 
+-- default configuration
+local keycloak_default_config = {
+}
+
 -- list of all caches used in this code
 -- this is used by keycloak.invalidate_caches()
 local keycloak_caches = {
@@ -107,7 +111,7 @@ local function keycloak_config(config_path)
 
     -- TODO: cache keycloak.json
     local config = keycloak_load_config(config_path)
-    return config
+    return keycloak_merge(config,keycloak_default_config)
 end
 
 -- returns the base URL for the configured Keycloak realm
