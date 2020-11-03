@@ -26,14 +26,14 @@ local keycloak_default_config = {
 -- this is used by keycloak.invalidate_caches()
 local keycloak_caches = {
     "keycloak_config",
-    "keycloak_discovery"
+    "keycloak_discovery",
     -- add any other caches we use here
 }
 
 -- Keycloak URIs for service discovery
 local keycloak_realm_discovery_endpoints = {
     openid = ".well-known/openid-configuration",
-    uma2   = ".well-known/uma2-configuration"
+    uma2   = ".well-known/uma2-configuration",
 }
 
 -- keycloak_openidc_defaults -- populated above keycloak_openidc_opts()
