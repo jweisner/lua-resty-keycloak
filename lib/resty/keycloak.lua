@@ -73,6 +73,16 @@ local function keycloak_merge(one, two)
     return two
 end
 
+-- searches a table t for a value v
+-- returns first index if found
+-- returns nil if not found
+local function keycloak_table_has_value(t,v)
+    for ti,tv in pairs(t) do
+        if tv == v then return ti end
+    end
+    return nil
+end
+
 -----------
 -- Private Functions
 
