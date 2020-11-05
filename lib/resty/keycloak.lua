@@ -41,7 +41,7 @@ local keycloak_realm_discovery_endpoints = {
 
 -- this hash maps HTTP method to Keycloak scope
 -- these scopes can be added to resources in Keycloak to limit authz rules to HTTP methods
-local keycloak_method_scope_map = {
+local keycloak_scope_for_method = {
     GET     = "view",
     HEAD    = "view",
     OPTIONS = "view",
@@ -254,14 +254,14 @@ end
 
 -- converts HTTP method into Keycloak scope or "extended" if unknown
 -- eg. GET => read
-local function keycloak_scope_for_method(method)
+local function method_scope_for_method(method)
     assert(type(method) == "string")
 
     local scope = "extended" -- this scope is returned for unknown HTTP methods (eg. WebDAV)
 
     -- if we have mapped the HTTP request method to a Keycloak scope, use that
-    if keycloak_method_scope_map[method] ~= nil then
-        scope = keycloak_method_scope_map[method]
+    if keycloak_scope_for_method[method] ~= nil then
+        scope = keycloak_scope_for_method[method]
     end
 
     return scope
@@ -520,7 +520,7 @@ local function keycloak_uri_path_match(subject, test)
     end
 end
 
-local function keycloak_scopes_to_lookup_table(scope_hash)
+local function keycloak_method_scopes_to_lookup_table(scope_hash)
     assert(type(scope_hash) == "table")
 
     local lookup_table = {}
@@ -537,10 +537,10 @@ local function keycloak_resourceid_for_request(request_uri,request_method)
     local request_uri    = request_uri or ngx.var.request_uri
     local request_method = request_method or ngx.req.get_method()
 
-    local keycloak_scope = keycloak_scope_for_method(ngx.req.get_method())
-    local resources      = keycloak_resources()
+    local method_scope = keycloak_method_scopes_to_lookup_table(ngx.req.get_method())
+    local resources    = keycloak_resources()
 
-    ngx.log(ngx.DEBUG, "request_method: " .. request_method .. " keycloak_scope:" .. keycloak_scope .. " resource count: " .. #resources)
+    ngx.log(ngx.DEBUG, "request_method: " .. request_method .. " method_scope:" .. method_scope .. " resource count: " .. #resources)
 
     -- initialize "best match"
     local found_depth = 0
@@ -549,14 +549,14 @@ local function keycloak_resourceid_for_request(request_uri,request_method)
     for resource_id,resource in pairs(resources) do
         ngx.log(ngx.DEBUG, "Trying resource: \"" .. resource.name .. "\"")
 
-        local resource_scopes = keycloak_scopes_to_lookup_table(resource.resource_scopes)
+        local resource_scopes = keycloak_method_scopes_to_lookup_table(resource.resource_scopes)
 
         -- search for any method scopes (scopes mapped to HTTP methods)
         -- if there are any associated method scopes, the request method must match
         local resource_has_method_scopes = true
         for _,scope in pairs(resource_scopes) do -- for each associated scope...
             -- check if this scope in the table of method scopes
-            if keycloak_table_has_value(keycloak_method_scope_map,scope) ~= nil then
+            if keycloak_table_has_value(keycloak_scope_for_method,scope) ~= nil then
                 ngx.log(ngx.DEBUG, "Found resource scopes in resource: " .. resource.name)
             end
             resource_has_method_scopes = false
@@ -564,9 +564,9 @@ local function keycloak_resourceid_for_request(request_uri,request_method)
 
         -- check if the request scope is in the associated resource scopes
         local resource_scopes_include_request_method = false
-        if resource_scopes[keycloak_scope] ~= nil then
+        if resource_scopes[method_scope] ~= nil then
             resource_scopes_include_request_method = true
-            ngx.log(ngx.DEBUG, "Resource: \"" .. resource.name .. "\": found matching scope: " .. keycloak_scope)
+            ngx.log(ngx.DEBUG, "Resource: \"" .. resource.name .. "\": found matching scope: " .. method_scope)
         else
             ngx.log(ngx.DEBUG, "Resource: \"" .. resource.name .. "\": no matching scopes.")
         end
