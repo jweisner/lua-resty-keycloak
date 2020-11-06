@@ -52,17 +52,6 @@ local keycloak_scope_for_method = {
 -----------
 -- Utility Functions
 
--- merge tables. Table "one" has priority
--- eg. keycloak_merge(config, defaults)
-local function keycloak_merge(one, two)
-    assert(type(one) == "table")
-    assert(type(two) == "table")
-
-    for k, v in pairs(one) do two[k] = v end
-
-    return two
-end
-
 -- searches a table t for a value v
 -- returns first index if found
 -- returns nil if not found
