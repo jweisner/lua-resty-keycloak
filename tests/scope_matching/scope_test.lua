@@ -1,5 +1,6 @@
 local cjson     = require("cjson")
 local cjson_s   = require("cjson.safe")
+local inspect   = require("inspect")
 
 local string    = string
 local ipairs    = ipairs
