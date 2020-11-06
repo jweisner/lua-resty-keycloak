@@ -66,7 +66,7 @@ end
 
 -- converts HTTP method into Keycloak scope or "extended" if unknown
 -- eg. GET => read
-local function method_scope_for_method(method)
+local function request_method_to_scope(method)
     assert(type(method) == "string")
 
     local scope = "extended" -- this scope is returned for unknown HTTP methods (eg. WebDAV)
@@ -143,19 +143,21 @@ end
 local function keycloak_get_resources()
     local resource_set = keycloak_resource_set()
     local resources    = {}
+    local count        = 0
 
     for k,resource_id in ipairs(resource_set) do
         resources[resource_id] = keycloak_resource(resource_id)
+        count = count +1
     end
 
-    return resources
+    return resources,count
 end
 
 local function keycloak_resources()
-    local resources = keycloak_get_resources()
+    local resources,count = keycloak_get_resources()
     assert(type(resources) == "table")
 
-    return resources
+    return resources,count
 end
 
 -- return the match depth or nil if not found
@@ -201,7 +203,7 @@ local function keycloak_uri_path_match(subject, test)
     end
 end
 
-local function keycloak_method_scopes_to_lookup_table(scope_hash)
+local function keycloak_resource_scope_hash_to_lookup_table(scope_hash)
     assert(type(scope_hash) == "table")
 
     local lookup_table = {}
@@ -212,16 +214,27 @@ local function keycloak_method_scopes_to_lookup_table(scope_hash)
     return lookup_table
 end
 
+local function resource_scopes_include_request_methods(resource_scopes)
+    for _,scope in pairs(resource_scopes) do -- for each associated scope...
+        -- check if this scope in the table of method scopes
+        if keycloak_table_has_value(keycloak_scope_for_method,scope) ~= nil then
+            return true
+        end
+    end
+    return false
+end
+
 -- return the resource_id for the deepest match of uris for the given uri
 -- returns nil if none found
 local function keycloak_resourceid_for_request(request_uri,request_method)
-    local request_uri    = request_uri or ngx.var.request_uri
-    local request_method = request_method or ngx.req.get_method()
+    local request_uri               = request_uri or ngx.var.request_uri
+    local request_method            = request_method or ngx.req.get_method()
+    local request_method_scope      = request_method_to_scope(request_method)
+    local resources,resources_count = keycloak_resources()
 
-    local method_scope = keycloak_method_scopes_to_lookup_table(ngx.req.get_method())
-    local resources    = keycloak_resources()
+    assert(type(resources) == "table")
 
-    ngx.log(ngx.DEBUG, "request_method: " .. request_method .. " method_scope:" .. method_scope .. " resource count: " .. #resources)
+    ngx.log(ngx.DEBUG, "request_uri:" .. request_uri .. " request_method:" .. request_method .. " method_scope:" .. request_method_scope .. " resource count:" .. resources_count)
 
     -- initialize "best match"
     local found_depth = 0
@@ -230,41 +243,47 @@ local function keycloak_resourceid_for_request(request_uri,request_method)
     for resource_id,resource in pairs(resources) do
         ngx.log(ngx.DEBUG, "Trying resource: \"" .. resource.name .. "\"")
 
-        local resource_scopes = keycloak_method_scopes_to_lookup_table(resource.resource_scopes)
-
+        local resource_scopes = keycloak_resource_scope_hash_to_lookup_table(resource.resource_scopes)
         -- search for any method scopes (scopes mapped to HTTP methods)
         -- if there are any associated method scopes, the request method must match
-        local resource_has_method_scopes = true
-        for _,scope in pairs(resource_scopes) do -- for each associated scope...
-            -- check if this scope in the table of method scopes
-            if keycloak_table_has_value(keycloak_scope_for_method,scope) ~= nil then
-                ngx.log(ngx.DEBUG, "Found resource scopes in resource: " .. resource.name)
-            end
-            resource_has_method_scopes = false
-        end
+        local resource_has_method_scopes = resource_scopes_include_request_methods(resource_scopes)
 
-        -- check if the request scope is in the associated resource scopes
         local resource_scopes_include_request_method = false
-        if resource_scopes[method_scope] ~= nil then
-            resource_scopes_include_request_method = true
-            ngx.log(ngx.DEBUG, "Resource: \"" .. resource.name .. "\": found matching scope: " .. method_scope)
+        if resource_has_method_scopes then
+            ngx.log(ngx.DEBUG, "Resource: \"" .. resource.name .. "\" has method scopes.")
+            -- check if the request scope is in the associated resource scopes
+            if resource_scopes[request_method_scope] ~= nil then
+                resource_scopes_include_request_method = true
+                ngx.log(ngx.DEBUG, "Resource: \"" .. resource.name .. "\": found matching scope: " .. request_method_scope)
+            else
+                ngx.log(ngx.DEBUG, "Resource: \"" .. resource.name .. "\": no matching scopes.")
+            end
         else
-            ngx.log(ngx.DEBUG, "Resource: \"" .. resource.name .. "\": no matching scopes.")
+            ngx.log(ngx.DEBUG, "Resource: \"" .. resource.name .. "\" no method scopes.")
         end
 
         -- only test the resource URIs if the request method matches the resource scope
         -- or the resource doesn't list any associated scopes
         if resource_scopes_include_request_method or (resource_has_method_scopes == false) then
-            ngx.log(ngx.DEBUG, "Testing resource: \"" .. resource.name .. "\": matching resource scope or scopes empty.")
+            ngx.log(ngx.DEBUG, "Resource: \"" .. resource.name .. "\": passed scope check, testing " .. #resource.uris .. " resource URI patterns: " .. table.concat(resource.uris, ","))
             for _,uri in ipairs(resource.uris) do
+                ngx.log(ngx.DEBUG, "Resource: \"" .. resource.name .. "\": testing pattern:" .. uri .. " against request:" .. request_uri)
                 local match_depth = keycloak_uri_path_match(request_uri,uri) or 0
-                if match_depth > found_depth then
-                    found_depth = match_depth
-                    found       = resource_id
+                if match_depth > 0 then
+                    ngx.log(ngx.DEBUG, "Resource: \"" .. resource.name .. "\": URI pattern \"" .. uri .. "\" matches at depth " .. match_depth)
+                    if match_depth > found_depth then
+                        ngx.log(ngx.DEBUG, "Resource: \"" .. resource.name .. "\": URI pattern \"" .. uri .. "\" is deeper (" .. match_depth .. ") than previous match (" .. found_depth .. ")")
+                        found_depth = match_depth
+                        found       = resource_id
+                    else
+                        ngx.log(ngx.DEBUG, "Resource: \"" .. resource.name .. "\": URI pattern \"" .. uri .. "\" is shallower (" .. match_depth .. ") than previous match (" .. found_depth .. ")")
+                    end
+                else
+                    ngx.log(ngx.DEBUG, "Resource: \"" .. resource.name .. "\": URI pattern \"" .. uri .. "\" does not match")
                 end
             end
         else
-            ngx.log(ngx.DEBUG, "Skipping resource: \"" .. resource.name .. "\": no matching resource scope and scopes not empty.")
+            ngx.log(ngx.DEBUG, "Resource: \"" .. resource.name .. "\": skipping URI check: disqualified by method scope.")
         end
     end
     return found,found_depth
