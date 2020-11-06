@@ -53,13 +53,12 @@ local keycloak_scope_for_method = {
 -- Utility Functions
 
 -- searches a table t for a value v
--- returns first index if found
--- returns nil if not found
+-- returns boolean
 local function keycloak_table_has_value(t,v)
     for ti,tv in pairs(t) do
-        if tv == v then return ti end
+        if tv == v then return true end
     end
-    return nil
+    return false
 end
 
 -----------
