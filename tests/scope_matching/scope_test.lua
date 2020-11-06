@@ -300,3 +300,5 @@ end
 -----------
 -- Bless keycloak table as object
 keycloak.__index = keycloak
+
+print(keycloak_resourceid_for_request("/groupone/secrets/", "POST"))
