@@ -7,10 +7,11 @@ local ipairs    = ipairs
 local pairs     = pairs
 local type      = type
 
+-- BEGIN Nginx test harness
 local ngx = {}
 
 function ngx.log(level, message)
-    print(level .. ":" .. message)
+    print(level .. ": " .. message)
 end
 
 ngx.DEBUG = "DEBUG"
@@ -18,8 +19,10 @@ ngx.ERR = "ERROR"
 ngx.HTTP_FORBIDDEN = "403"
 ngx.HTTP_INTERNAL_SERVER_ERROR = "500"
 ngx.HTTP_OK = "200"
-ngx.exit = os.exit()
+function ngx.exit() os.exit() end
 ngx.status = ''
+
+-- END Nginx test harness
 
 -- initialize the resty-keycloak instance
 -- TODO: resolve all of the different ways the config file (keycloak.json) path could be provided to the extension. The config data needs to be loaded early.
