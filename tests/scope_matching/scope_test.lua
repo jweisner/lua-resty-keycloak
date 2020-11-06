@@ -92,66 +92,50 @@ local function keycloak_resource(resource_id)
 
     local resources = {}
 
-    resources['e06a803c-0da4-414d-a29d-269b1fbf8501'] = cjson_s.decode([[
-    {
-        "name": "/",
-        "owner": {
-            "id": "31c4c56d-3fdf-43a1-ba84-ac5c1bd7d4f1"
+    resources['e06a803c-0da4-414d-a29d-269b1fbf8501'] = {
+        name = "/",
+        owner = {
+          id = "31c4c56d-3fdf-43a1-ba84-ac5c1bd7d4f1"
         },
-        "ownerManagedAccess": false,
-        "displayName": "Site root",
-        "attributes": {},
-        "_id": "e06a803c-0da4-414d-a29d-269b1fbf8501",
-        "uris": [
-            "/*",
-            "/"
-        ],
-        "resource_scopes": [
-            {
-                "name": "read-public"
-            }
-        ],
-        "scopes": [
-            {
-                "name": "read-public"
-            }
-        ]
-    }]])
-
-    resources["ffb605ca-5d5d-4f57-b24e-e5536d370e7b"] = cjson_s.decode([[
-        {
-            "name": "/groupone/secrets/",
-            "owner": {
-                "id": "31c4c56d-3fdf-43a1-ba84-ac5c1bd7d4f1"
-            },
-            "ownerManagedAccess": true,
-            "displayName": "Group One Secrets",
-            "attributes": {},
-            "_id": "ffb605ca-5d5d-4f57-b24e-e5536d370e7b",
-            "uris": [
-                "/groupone/secrets/*",
-                "/groupone/secrets/"
-            ],
-            "resource_scopes": []
+        ownerManagedAccess = false,
+        displayName = "Site root",
+        attributes = { },
+        _id = "e06a803c-0da4-414d-a29d-269b1fbf8501",
+        uris = { "/*", "/" },
+        resource_scopes = {
+            { name = "read-public" },
+            { name = "view" }
+        },
+        scopes = {
+            { name = "read-public" },
+            { name = "view" }
         }
-    ]])
+      }
 
-    resources["87ea36a2-27a7-4b7b-b939-62a11bb5c5ad"] = cjson_s([[
-        {
-            "name": "Group Secrets",
-            "owner": {
-                "id": "31c4c56d-3fdf-43a1-ba84-ac5c1bd7d4f1"
-            },
-            "ownerManagedAccess": true,
-            "attributes": {},
-            "_id": "87ea36a2-27a7-4b7b-b939-62a11bb5c5ad",
-            "uris": [
-                "/*/secrets/*",
-                "/*/secrets/"
-            ],
-            "resource_scopes": []
-        }
-    ]])
+      resources["ffb605ca-5d5d-4f57-b24e-e5536d370e7b"] = {
+        name = "/groupone/secrets/",
+        owner = {
+          id = "31c4c56d-3fdf-43a1-ba84-ac5c1bd7d4f1"
+        },
+        ownerManagedAccess = true,
+        displayName = "Group One Secrets",
+        attributes = { },
+        _id = "ffb605ca-5d5d-4f57-b24e-e5536d370e7b",
+        uris = { "/groupone/secrets/*", "/groupone/secrets/" },
+        resource_scopes = { }
+      }
+
+      resources["87ea36a2-27a7-4b7b-b939-62a11bb5c5ad"] = {
+        name = "Group Secrets",
+        owner = {
+          id = "31c4c56d-3fdf-43a1-ba84-ac5c1bd7d4f1"
+        },
+        ownerManagedAccess = true,
+        attributes = { },
+        _id = "87ea36a2-27a7-4b7b-b939-62a11bb5c5ad",
+        uris = { "/*/secrets/*", "/*/secrets/" },
+        resource_scopes = { }
+      }
 
     return resources[resource_id]
 end
