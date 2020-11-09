@@ -66,7 +66,7 @@ end
 
 -- converts HTTP method into Keycloak scope or "extended" if unknown
 -- eg. GET => read
-local function request_method_to_scope(method)
+local function keycloak_request_method_to_scope(method)
     assert(type(method) == "string")
 
     local scope = "extended" -- this scope is returned for unknown HTTP methods (eg. WebDAV)
@@ -229,7 +229,7 @@ end
 local function keycloak_resourceid_for_request(request_uri,request_method)
     local request_uri               = request_uri or ngx.var.request_uri
     local request_method            = request_method or ngx.req.get_method()
-    local request_method_scope      = request_method_to_scope(request_method)
+    local request_method_scope      = keycloak_request_method_to_scope(request_method)
     local resources,resources_count = keycloak_resources()
 
     assert(type(resources) == "table")
