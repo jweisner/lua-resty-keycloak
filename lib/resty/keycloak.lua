@@ -519,7 +519,7 @@ local function keycloak_uri_path_match(subject, test)
     end
 end
 
-local function keycloak_method_scopes_to_lookup_table(scope_hash)
+local function keycloak_resource_scope_hash_to_lookup_table(scope_hash)
     assert(type(scope_hash) == "table")
 
     local lookup_table = {}
@@ -552,7 +552,7 @@ local function keycloak_resourceid_for_request(request_uri,request_method)
         local resource_scopes = keycloak_resource_scope_hash_to_lookup_table(resource.resource_scopes)
         -- search for any method scopes (scopes mapped to HTTP methods)
         -- if there are any associated method scopes, the request method must match
-        local resource_has_method_scopes = resource_scopes_include_request_methods(resource_scopes)
+        local resource_has_method_scopes = keycloak_resource_scopes_include_request_methods(resource_scopes)
 
         local resource_scopes_include_request_method = false
         if resource_has_method_scopes then
