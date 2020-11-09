@@ -530,6 +530,16 @@ local function keycloak_resource_scope_hash_to_lookup_table(scope_hash)
     return lookup_table
 end
 
+local function keycloak_resource_scopes_include_request_methods(resource_scopes)
+    for _,scope in pairs(resource_scopes) do -- for each associated scope...
+        -- check if this scope in the table of method scopes
+        if keycloak_table_has_value(keycloak_scope_for_method,scope) ~= nil then
+            return true
+        end
+    end
+    return false
+end
+
 -- return the resource_id for the deepest match of uris for the given uri
 -- returns nil if none found
 local function keycloak_resourceid_for_request(request_uri,request_method)
