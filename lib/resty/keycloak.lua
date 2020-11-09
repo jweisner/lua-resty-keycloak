@@ -519,6 +519,19 @@ local function keycloak_uri_path_match(subject, test)
     end
 end
 
+local function keycloak_request_method_to_scope(method)
+    assert(type(method) == "string")
+
+    local scope = "extended" -- this scope is returned for unknown HTTP methods (eg. WebDAV)
+
+    -- if we have mapped the HTTP request method to a Keycloak scope, use that
+    if keycloak_scope_for_method[method] ~= nil then
+        scope = keycloak_scope_for_method[method]
+    end
+
+    return scope
+end
+
 local function keycloak_resource_scope_hash_to_lookup_table(scope_hash)
     assert(type(scope_hash) == "table")
 
