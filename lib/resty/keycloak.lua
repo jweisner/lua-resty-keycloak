@@ -443,21 +443,21 @@ end
 local function keycloak_get_resources()
     local resource_set = keycloak_resource_set()
     local resources    = {}
+    local count        = 0
 
     for k,resource_id in ipairs(resource_set) do
         resources[resource_id] = keycloak_resource(resource_id)
+        count = count +1
     end
 
-    return resources
+    return resources,count
 end
 
 local function keycloak_resources()
-    -- TODO: cache
-
-    local resources = keycloak_get_resources()
+    local resources,count = keycloak_get_resources()
     assert(type(resources) == "table")
 
-    return resources
+    return resources,count
 end
 
 -- this global has to be declared here; after all of the required functions are defined, and before keycloak_openidc_opts()
