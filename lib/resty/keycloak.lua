@@ -19,7 +19,8 @@ local keycloak = {
 
 -- default configuration
 local keycloak_default_config = {
-    public_access_scope = "read-public",
+    anonymous_scope       = "read-public", -- keycloak scope to allow anonymous
+    anonymous_policy_mode = "permissive",  -- enforcing, permissive, disabled : enforcing requires anonymous_scope to be in the resource scopes
 }
 
 -- list of all caches used in this code
@@ -460,6 +461,24 @@ local function keycloak_resources()
     return resources,count
 end
 
+local function keycloak_resource_has_scope(resource_id, scope)
+    assert(type(resource_id) == "string")
+    assert(type(scope)       == "string")
+
+    resource = keycloak_get_resource(resource_id)
+    if resource == nil then
+        ngx.log(ngx.ERR, "Resource id \"" .. resource_id .. "\" not found!")
+        return false
+    end
+
+    local resource_scopes = keycloak_resource_scope_hash_to_lookup_table(resource.resource_scopes)
+    if resource_scopes[scope] == true then
+        return true
+    else
+        return false
+    end
+end
+
 -- this global has to be declared here; after all of the required functions are defined, and before keycloak_openidc_opts()
 local keycloak_openidc_defaults = {
     -- TODO: callback URI needs to be configurable
@@ -808,12 +827,34 @@ function keycloak.authorize()
     return ngx.HTTP_OK
 end
 
--- returns true if there are any policies matching the request
-function keycloak.request_has_policy()
-    if keycloak_resourceid_for_request() == nil then
-        return false
+-- returns true if the resource ID has the configured "anonymous scope" attached
+function keycloak.authorize_anonymous(anonymous_scope)
+    local config = keycloak_config
+    local anonymous_scope = anonymous_scope or config["anonymous_scope"]
+
+    -- decline to make a decision if anonymous enforcing disabled
+    if config["anonymous_policy_mode"] == "disabled" then
+        return ngx.DECLINED
+    end
+
+    resource_id = keycloak_resourceid_for_request()
+
+    -- no resource found with matching URI, so defer to anonymous policy mode
+    if resource_id == nil then
+        if config["anonymous_policy_mode"] == "permissive" then
+            return ngx.HTTP_OK
+        elseif config["anonymous_policy_mode"] == "enforcing" then
+            return ngx.HTTP_UNAUTHORIZED
+        else -- invalid anonymous_policy_mode
+            ngx.log(ngx.ERR, "Unexpected anonymous_policy_mode: " .. tostring(config["anonymous_policy_mode"] == "enforcing")
+            return ngx.DECLINED
+        end
+    end
+
+    if keycloak_resource_has_scope(resource_id,anonymous_scope) == true then
+        return ngx.HTTP_OK
     else
-        return true
+        return ngx.HTTP_UNAUTHORIZED
     end
 end
 
