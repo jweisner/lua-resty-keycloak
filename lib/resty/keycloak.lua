@@ -755,6 +755,8 @@ function keycloak.authorize()
     end
 
     local session_token = session.data.access_token
+    session.close()
+
     -- catch empty access token
     if session_token == nil then
         ngx.log(ngx.ERR, "Session token is nil: access forbidden.")
