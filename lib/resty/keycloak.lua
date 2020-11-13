@@ -808,6 +808,15 @@ function keycloak.authorize()
     return ngx.HTTP_OK
 end
 
+-- returns true if there are any policies matching the request
+function keycloak.request_has_policy()
+    if keycloak_resourceid_for_request() == nil then
+        return false
+    else
+        return true
+    end
+end
+
 -----------
 -- Bless keycloak table as object
 keycloak.__index = keycloak
