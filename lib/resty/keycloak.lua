@@ -656,7 +656,7 @@ local function keycloak_resource_has_scope(resource_id, scope)
     assert(type(resource_id) == "string")
     assert(type(scope)       == "string")
 
-    resource = keycloak_get_resource(resource_id)
+    local resource = keycloak_get_resource(resource_id)
     if resource == nil then
         ngx.log(ngx.ERR, "Resource id \"" .. resource_id .. "\" not found!")
         return false
