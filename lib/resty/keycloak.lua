@@ -461,24 +461,6 @@ local function keycloak_resources()
     return resources,count
 end
 
-local function keycloak_resource_has_scope(resource_id, scope)
-    assert(type(resource_id) == "string")
-    assert(type(scope)       == "string")
-
-    resource = keycloak_get_resource(resource_id)
-    if resource == nil then
-        ngx.log(ngx.ERR, "Resource id \"" .. resource_id .. "\" not found!")
-        return false
-    end
-
-    local resource_scopes = keycloak_resource_scope_hash_to_lookup_table(resource.resource_scopes)
-    if resource_scopes[scope] == true then
-        return true
-    else
-        return false
-    end
-end
-
 -- this global has to be declared here; after all of the required functions are defined, and before keycloak_openidc_opts()
 local keycloak_openidc_defaults = {
     -- TODO: callback URI needs to be configurable
@@ -668,6 +650,24 @@ local function keycloak_get_service_account_token()
     end
 
     return res.access_token
+end
+
+local function keycloak_resource_has_scope(resource_id, scope)
+    assert(type(resource_id) == "string")
+    assert(type(scope)       == "string")
+
+    resource = keycloak_get_resource(resource_id)
+    if resource == nil then
+        ngx.log(ngx.ERR, "Resource id \"" .. resource_id .. "\" not found!")
+        return false
+    end
+
+    local resource_scopes = keycloak_resource_scope_hash_to_lookup_table(resource.resource_scopes)
+    if resource_scopes[scope] == true then
+        return true
+    else
+        return false
+    end
 end
 
 -----------
