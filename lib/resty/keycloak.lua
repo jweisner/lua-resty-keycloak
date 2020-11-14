@@ -829,7 +829,7 @@ end
 
 -- returns true if the resource ID has the configured "anonymous scope" attached
 function keycloak.authorize_anonymous(anonymous_scope)
-    local config = keycloak_config
+    local config = keycloak_config()
     local anonymous_scope = anonymous_scope or config["anonymous_scope"]
 
     -- decline to make a decision if anonymous enforcing disabled
