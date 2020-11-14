@@ -769,6 +769,7 @@ function keycloak.authorize()
     local session = r_session.open()
 
     if session.present == nil then
+        session:close()
         ngx.log(ngx.DEBUG, "No session present: access forbidden.")
         return ngx.HTTP_FORBIDDEN
     end
