@@ -837,7 +837,7 @@ function keycloak.authorize_anonymous(anonymous_scope)
         return ngx.DECLINED
     end
 
-    resource_id = keycloak_resourceid_for_request()
+    local resource_id = keycloak_resourceid_for_request()
 
     -- no resource found with matching URI, so defer to anonymous policy mode
     if resource_id == nil then
