@@ -19,8 +19,12 @@ local keycloak = {
 
 -- default configuration
 local keycloak_default_config = {
+    anonymous_policy_mode = "permissive", -- enforcing, permissive, disabled : enforcing requires anonymous_scope to be in the resource scopes
     anonymous_scope       = "read-public", -- keycloak scope to allow anonymous
-    anonymous_policy_mode = "permissive",  -- enforcing, permissive, disabled : enforcing requires anonymous_scope to be in the resource scopes
+    auth_server_url       = "http://localhost:8080/auth",
+    client_id             = "nginx",
+    client_secret         = "00000000-0000-0000-0000-000000000000",
+    realm                 = "master",
 }
 
 -- list of all caches used in this code
