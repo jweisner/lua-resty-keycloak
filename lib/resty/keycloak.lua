@@ -4,6 +4,7 @@ local cjson_s   = require("cjson.safe")
 local http      = require("resty.http")
 local r_session = require("resty.session")
 local openidc   = require("resty.openidc")
+local inspect   = require("inspect")
 -- local redis     = require("resty.redis")
 local string    = string
 local ipairs    = ipairs
@@ -687,27 +688,12 @@ function keycloak.service_account_token()
 end
 
 --[[
-    Converts a table (possibly nested) into a string for display or debug logging
-
-    table (table)   : from keycloak_realm_discovery_endpoints
-    depth (interger): indent level (default = 0)
-
-    returns a human-readble string representation of the table input
+    localized wrapper on inspect()
+    returns a human-readble string representation of the input
 --]]
-function keycloak.dumpTable(table, depth)
-    local depth = depth or 0
-    local debug_out = ""
-
-    for k,v in pairs(table) do
-        if (type(v) == "table") then
-            debug_out = debug_out .. string.rep("  ", depth) .. k .. ":" .. "\n"
-            keycloak.dumpTable(v, depth+1)
-        else
-            debug_out = debug_out .. string.rep("  ", depth) .. ": " .. tostring(v) .. "\n"
-        end
-    end
-
-    return debug_out
+function keycloak.inspect(_)
+    local _ = _
+    return inspect(_)
 end
 
 --[[
