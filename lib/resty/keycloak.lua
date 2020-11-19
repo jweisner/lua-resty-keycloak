@@ -4,6 +4,7 @@ local cjson_s   = require("cjson.safe")
 local http      = require("resty.http")
 local r_session = require("resty.session")
 local openidc   = require("resty.openidc")
+local r_env     = require("resty.env")
 local inspect   = require("inspect")
 -- local redis     = require("resty.redis")
 local string    = string
@@ -79,6 +80,22 @@ local function keycloak_merge(one, two)
     return two
 end
 
+-- Merges tables one and two where one has non-default values
+-- Table "one" has priority.
+-- this is useful where there are multiple sources of config data all with default values set
+local function keycloak_merge_config(one,two,defaults)
+    assert(type(one)      == "table")
+    assert(type(two)      == "table")
+    assert(type(defaults) == "table")
+
+    local newtable = two
+    for k,v in pairs(one) do
+        newtable[k] = (one[k] ~= defaults[k]) and one[k] or two[k]
+    end
+
+    return newtable
+end
+
 -- searches a table t for a value v
 -- returns boolean
 local function keycloak_table_has_value(t,v)
@@ -92,6 +109,25 @@ end
 -- Private Functions
 
 
+-- Returns KeyCloak client configuration as a Lua table.
+-- Pulls in all values from defaults (keycloak_default_config)
+-- Overrides default values with ENV values where they are not default
+-- Overrides default + ENV with Nginx "set" values where they are not default
+-- Nginx "set" values are the highest priority, so admins can avoid having sensitive data in ENV
+local function keycloak_get_config()
+    local env_table = {}
+    local ngx_table = {}
+
+    -- get ENV values based on default config keys
+    -- eg. keycloak_default_config["foo"] will look for ENV["KEYCLOAK_FOO"]
+    -- eg. keycloak_default_config["foo"] will look for nginx.var.keycloak_foo
+    for k,v in pairs(keycloak_default_config) do
+        local env_key_name = "KEYCLOAK_" .. string.upper(k)
+        local set_key_name = "keycloak_" .. k
+        env_table[k] = r_env.get(env_key_name) or keycloak_default_config[k]
+        ngx_table[k] = ngx.var[set_key_name] or keycloak_default_config[k]
+    end
+    return keycloak_merge_config(ngx_table, env_table, keycloak_default_config)
 end
 
 -- returns the keycloak configuration from cache, or calls keycloak_get_config to calculate
