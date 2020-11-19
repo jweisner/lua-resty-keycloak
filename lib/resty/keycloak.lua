@@ -108,7 +108,7 @@ local function keycloak_realm_url()
     local config          = keycloak_config()
     assert(type(config)   == "table")
 
-    local auth_server_url = config["auth-server-url"]
+    local auth_server_url = config["auth_server_url"]
     -- make sure the auth server url ends in /
     if string.sub(auth_server_url, -1) ~= '/' then
         auth_server_url = auth_server_url .. '/'
