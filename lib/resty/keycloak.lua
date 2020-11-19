@@ -92,8 +92,6 @@ end
 -- Private Functions
 
 
-
-    end
 end
 
 -- returns the keycloak configuration from cache, or calls keycloak_get_config to calculate
