@@ -13,7 +13,6 @@ local type      = type
 local ngx       = ngx
 
 -- initialize the resty-keycloak instance
--- TODO: resolve all of the different ways the config file (keycloak.json) path could be provided to the extension. The config data needs to be loaded early.
 local keycloak = {
     _VERSION = "0.0.1"
 }
@@ -93,38 +92,14 @@ end
 -- Private Functions
 
 
--- loads the Keycloak-generated keycloak.json from disk
-local function keycloak_load_config(config_path)
-    -- TODO: remove keycloak.json file support?
-    config_path = config_path or ngx.config.prefix() .. "/conf/keycloak.json"
 
-    local file, err = io.open(config_path, "rb")
-    if file == nil then
-        ngx.log(ngx.ERR, "Error loading keycloak json config: " .. err)
-        return {}
     end
-
-    local data_json = file:read("*a")
-    file:close()
-
-    local json = cjson.decode(data_json)
-    -- check for JSON decode error
-    if json == nil then
-        ngx.log(ngx.ERR, "Error loading keycloak json config: JSON decode error")
-        return {}
-    end
-
-    return json
 end
 
--- Returns the Keycloak-generated keycloak.json data as a Lua table
--- this file is generated in Keycloak, downloadable in the client "Installation" tab
--- "Keycloak OIDC JSON" format option
-local function keycloak_config(config_path)
-    -- TODO all Keycloak config may come from ENV settings
-
-    -- TODO: cache keycloak.json
-    local config = keycloak_load_config(config_path)
+-- returns the keycloak configuration from cache, or calls keycloak_get_config to calculate
+local function keycloak_config()
+    -- TODO: cache keycloak config
+    local config = keycloak_get_config()
     return keycloak_merge(config,keycloak_default_config)
 end
 
