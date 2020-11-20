@@ -5,7 +5,6 @@ local http      = require("resty.http")
 local r_session = require("resty.session")
 local openidc   = require("resty.openidc")
 local r_env     = require("resty.env")
-local inspect   = require("inspect")
 -- local redis     = require("resty.redis")
 local string    = string
 local ipairs    = ipairs
