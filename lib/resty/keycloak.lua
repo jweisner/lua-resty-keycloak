@@ -697,15 +697,6 @@ function keycloak.service_account_token()
 end
 
 --[[
-    localized wrapper on inspect()
-    returns a human-readble string representation of the input
---]]
-function keycloak.inspect(_)
-    local _ = _
-    return inspect(_)
-end
-
---[[
     Gets the authorization decision for a given access token to access a resource ID
 
     access_token (string): end-user access token from openidc session
