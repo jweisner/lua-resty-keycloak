@@ -918,6 +918,8 @@ function keycloak.authorize()
         -- cache the result in the session data
         session.data.authorized[resource_id] = ngx.HTTP_FORBIDDEN
         session:close()
+        -- TODO: warn log level
+        ngx.log(ngx.ERR, "WARNING: Keycloak returned authorization error: " .. cjson_s.encode(decision)) -- non-fatal error
         return ngx.HTTP_FORBIDDEN
     end
     -- catch unknown Keycloak response
