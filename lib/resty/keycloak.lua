@@ -901,8 +901,9 @@ function keycloak.authorize()
         session:close()
         return session.data.authorized[resource_id]
     end
+
+    -- decision request will return 403 error if no permissions mapped to resource
     local decision,decision_err = keycloak.decision(session_token,resource_id)
-    -- TODO: decision request will return 403 error if no permissions mapped to resource!
 
     -- catch decision unexpected return type
     if type(decision) ~= "table" then
