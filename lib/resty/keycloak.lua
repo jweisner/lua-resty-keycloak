@@ -8,6 +8,7 @@ local openidc      = require("resty.openidc")
 local string       = string
 local ipairs       = ipairs
 local pairs        = pairs
+local type         = type
 
 -- initialize the resty-keycloak instance
 local keycloak = {
