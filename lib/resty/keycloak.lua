@@ -404,12 +404,12 @@ local function keycloak_call_endpoint(endpoint_type, endpoint_name, headers, bod
 
         -- make sure client_id is set (resource server authentication)
         if body.client_id == nil then
-            body.client_id = config.resource
+            body.client_id = config.client_id
         end
 
         -- make sure client secret is included (resource server authentication)
         if body.client_secret == nil then
-            body.client_secret = config.credentials.secret
+            body.client_secret = config.client_secret
         end
     end
 
@@ -470,7 +470,7 @@ local function keycloak_get_decision(access_token, resource_id)
 
     local body = {
         grant_type    = "urn:ietf:params:oauth:grant-type:uma-ticket",
-        audience      = config.resource,
+        audience      = config.client_id,
         permission    = resource_id,
         response_mode = "decision"
     }
@@ -561,10 +561,10 @@ end
 -- this global has to be declared here; after all of the required functions are defined, and before keycloak_openidc_opts()
 local keycloak_openidc_defaults = {
     -- TODO: callback URI needs to be configurable
-    redirect_uri  = "/callback",
+    client_id     = keycloak_config()["client_id"],
+    client_secret = keycloak_config()["client_secret"],
     discovery     = keycloak_discovery_url("openid"),
-    client_id     = keycloak_config()["resource"],
-    client_secret = keycloak_config()["credentials"]["secret"]
+    redirect_uri  = keycloak_config()["callback_uri"],
 }
 
 -- generate the required opts table for resty.openidc calls
