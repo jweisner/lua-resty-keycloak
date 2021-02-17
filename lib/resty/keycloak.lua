@@ -11,6 +11,10 @@ local string       = string
 local ipairs       = ipairs
 local pairs        = pairs
 local type         = type
+-- TODO: use the dynamic loader here to avoid "undefined global ngx"
+local ngx_harness  = {}
+ngx_harness["log"] = function (log, message) end
+local ngx          = ngx or ngx_harness -- TODO: dynamically load Nginx test harness
 
 -- TODO: split this code into libraries and dynamically load the larger parts
 -- TODO: implement "busted" unit testing
