@@ -719,9 +719,9 @@ local function keycloak_resourceid_for_request(request_uri,request_method)
             ngx.log(ngx.DEBUG, "DEBUG: Resource: \"" .. resource_name .. "\": skipping URI check: disqualified by method scope.")
         end
     end
-    return found,found_depth
 
     keycloak_cache_set("keycloak_request_resourceid", ngx.md5(request_uri..request_method), found, keycloak_cache_expiry["keycloak_request_resourceid"])
+    return found
 end
 
 --[[
