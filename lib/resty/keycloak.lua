@@ -1,16 +1,13 @@
-local require   = require
-local cjson     = require("cjson")
-local cjson_s   = require("cjson.safe")
-local http      = require("resty.http")
-local r_session = require("resty.session")
-local openidc   = require("resty.openidc")
-local r_env     = require("resty.env")
--- local redis     = require("resty.redis")
-local string    = string
-local ipairs    = ipairs
-local pairs     = pairs
-local type      = type
-local ngx       = ngx
+local require      = require
+local cjson        = require("cjson")
+local cjson_s      = require("cjson.safe")
+local r_env        = require("resty.env")
+local http         = require("resty.http")
+local r_session    = require("resty.session")
+local openidc      = require("resty.openidc")
+local string       = string
+local ipairs       = ipairs
+local pairs        = pairs
 
 -- initialize the resty-keycloak instance
 local keycloak = {
