@@ -62,6 +62,7 @@ local keycloak_scope_for_method = {
 }
 
 -- timeouts used for httpc client calls (in milliseconds)
+-- TODO: move timeouts to config
 local keycloak_http_timeouts = {
     connect_timeout = 10000,
     send_timeout    = 5000,
@@ -267,6 +268,7 @@ end
 
 -- converts HTTP method into Keycloak scope or "extended" if unknown
 -- eg. GET => read
+-- TODO: this function is not used. remove?
 local function method_scope_for_method(method)
     assert(type(method) == "string")
 
