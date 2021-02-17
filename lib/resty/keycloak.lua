@@ -838,14 +838,16 @@ end
 -- returns ngx.HTTP_FORBIDDEN (403) for unauthorized users
 -- stops execution on errors
 function keycloak.authorize()
-    -- TODO: authorization may not be enabled for the resource
+    if keycloak.authorize_anonymous() == ngx.HTTP_OK then
+        return ngx.HTTP_OK
+    end
 
     local session = r_session.open()
 
     if session.present == nil then
         session:close()
-        return ngx.HTTP_FORBIDDEN
         ngx.log(ngx.DEBUG, "DEBUG: No session present: access forbidden.")
+        return ngx.HTTP_UNAUTHORIZED
     end
 
     local session_token = session.data.access_token
@@ -853,9 +855,10 @@ function keycloak.authorize()
 
     -- catch empty access token
     if session_token == nil then
-        return ngx.HTTP_FORBIDDEN
         -- TODO: warn log level
         ngx.log(ngx.ERR, "WARNING: Session token is nil: access forbidden.") -- non-fatal error
+        session:close()
+        return ngx.HTTP_UNAUTHORIZED
     end
 
     -- session_token is not null: check type
@@ -866,7 +869,6 @@ function keycloak.authorize()
 
     -- this defines the default policy for logged-in users.
     -- We are denying access to anything that doesn't match a resource in KeyCloak.
-    -- TODO: this should be based on the "enforcing" mode in KeyCloak
     -- forbidden if no matching resources found
     if resource_id == nil then
         -- TODO: warn log level
