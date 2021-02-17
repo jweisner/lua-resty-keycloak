@@ -32,12 +32,26 @@ local keycloak_default_config = {
 
 -- list of all caches used in this code
 -- this is used by keycloak.invalidate_caches()
+--
+-- IMPORTANT: each one of these needs a "lua_shared_dict" in Nginx config
 local keycloak_caches = {
+    "keycloak_anonymous",
     "keycloak_config",
     "keycloak_discovery",
-    "resource_set",
+    "keycloak_resource_set",
+    "keycloak_resource",
+    "keycloak_request_resourceid",
     -- add any other caches we use here
 }
+
+-- keycloak cache expiries
+local keycloak_cache_expiry = { }
+keycloak_cache_expiry["keycloak_anonymous"]          = 10 * 60
+keycloak_cache_expiry["keycloak_config"]             = 24 * 60 * 60
+keycloak_cache_expiry["keycloak_discovery"]          = 24 * 60 * 60
+keycloak_cache_expiry["keycloak_request_resourceid"] = 10 * 60
+keycloak_cache_expiry["keycloak_resource_set"]       = 30 * 60
+keycloak_cache_expiry["keycloak_resource"]           = 10 * 60
 
 -- Keycloak URIs for service discovery
 local keycloak_realm_discovery_endpoints = {
