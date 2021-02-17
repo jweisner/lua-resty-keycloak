@@ -6,6 +6,7 @@ local r_env        = require("resty.env")
 local http         = require("resty.http")
 local r_session    = require("resty.session")
 local openidc      = require("resty.openidc")
+local redis = {} -- TODO: dynamically load the redis code if needed
 local string       = string
 local ipairs       = ipairs
 local pairs        = pairs
