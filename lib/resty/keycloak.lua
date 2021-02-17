@@ -10,6 +10,11 @@ local ipairs       = ipairs
 local pairs        = pairs
 local type         = type
 
+-- TODO: split this code into libraries and dynamically load the larger parts
+-- TODO: implement "busted" unit testing
+-- TOTO: I miss the rains down in Africa
+-- TODO: migrate to OOP?
+
 -- initialize the resty-keycloak instance
 local keycloak = {
     _VERSION = "0.0.1"
