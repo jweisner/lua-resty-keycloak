@@ -221,13 +221,13 @@ local function keycloak_get_discovery(endpoint_type)
     -- check the HTTP response code from the discovery request
     if res.status ~= 200 then
         ngx.status = 500
-        ngx.log(ngx.ERR, "Error fetching " .. endpoint_type .. " discovery at " .. discovery_url .. " : " .. "code:" .. res.status .. " reason: " .. res.reason)
+        ngx.log(ngx.ERR, "Error fetching " .. endpoint_type .. " discovery at " .. discovery_url .. " : " .. err)
         ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
     end
 
     if err then
         ngx.status = 500
-        ngx.log(ngx.ERR, "Error fetching " .. endpoint_type .. " discovery at " .. discovery_url .. " : " .. err)
+        ngx.log(ngx.ERR, "Error fetching " .. endpoint_type .. " discovery at " .. discovery_url .. " : " .. "code:" .. res.status .. " reason: " .. res.reason)
         ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
     end
 
@@ -353,7 +353,8 @@ local function keycloak_call_endpoint(endpoint_type, endpoint_name, headers, bod
     -- TODO: check response HTTP error code
     -- check for HTTP client errors
     if err then
-        ngx.log(ngx.ERR, "Error calling endpoint " .. endpoint_name .. ": " .. err)
+        -- TODO: warn log level
+        ngx.log(ngx.ERR, "WARNING: Error calling endpoint " .. endpoint_name .. ": " .. err) -- non-fatal error
         return nil,err
     end
 
@@ -571,14 +572,14 @@ local function keycloak_resourceid_for_request(request_uri,request_method)
 
     assert(type(resources) == "table")
 
-    ngx.log(ngx.DEBUG, "request_uri:" .. request_uri .. " request_method:" .. request_method .. " method_scope:" .. request_method_scope .. " resource count:" .. resources_count)
+    ngx.log(ngx.DEBUG, "DEBUG: request_uri:" .. request_uri .. " request_method:" .. request_method .. " method_scope:" .. request_method_scope .. " resource count:" .. resources_count)
 
     -- initialize "best match"
     local found_depth = 0
     local found       = nil -- this will be replaced by the ID of the closest uri match
 
     for resource_id,resource in pairs(resources) do
-        ngx.log(ngx.DEBUG, "Trying resource: \"" .. resource.name .. "\"")
+        ngx.log(ngx.DEBUG, "DEBUG: Trying resource: \"" .. tostring(resource.name) .. "\"")
 
         local resource_scopes = keycloak_resource_scope_hash_to_lookup_table(resource.resource_scopes)
         -- search for any method scopes (scopes mapped to HTTP methods)
@@ -587,40 +588,40 @@ local function keycloak_resourceid_for_request(request_uri,request_method)
 
         local resource_scopes_include_request_method = false
         if resource_has_method_scopes then
-            ngx.log(ngx.DEBUG, "Resource: \"" .. resource.name .. "\" has method scopes.")
+            ngx.log(ngx.DEBUG, "DEBUG: Resource: \"" .. resource_name .. "\" has method scopes.")
             -- check if the request scope is in the associated resource scopes
             if resource_scopes[request_method_scope] ~= nil then
                 resource_scopes_include_request_method = true
-                ngx.log(ngx.DEBUG, "Resource: \"" .. resource.name .. "\": found matching scope: " .. request_method_scope)
+                ngx.log(ngx.DEBUG, "DEBUG: Resource: \"" .. resource_name .. "\": found matching scope: " .. request_method_scope)
             else
-                ngx.log(ngx.DEBUG, "Resource: \"" .. resource.name .. "\": no matching scopes.")
+                ngx.log(ngx.DEBUG, "DEBUG: Resource: \"" .. resource_name .. "\": no matching scopes.")
             end
         else
-            ngx.log(ngx.DEBUG, "Resource: \"" .. resource.name .. "\" no method scopes.")
+            ngx.log(ngx.DEBUG, "DEBUG: Resource: \"" .. resource_name .. "\" no method scopes.")
         end
 
         -- only test the resource URIs if the request method matches the resource scope
         -- or the resource doesn't list any associated scopes
         if resource_scopes_include_request_method or (resource_has_method_scopes == false) then
-            ngx.log(ngx.DEBUG, "Resource: \"" .. resource.name .. "\": passed scope check, testing " .. #resource.uris .. " resource URI patterns: " .. table.concat(resource.uris, ","))
+            ngx.log(ngx.DEBUG, "DEBUG: Resource: \"" .. resource_name .. "\": passed scope check, testing " .. #resource.uris .. " resource URI patterns: " .. table.concat(resource.uris, ","))
             for _,uri in ipairs(resource.uris) do
-                ngx.log(ngx.DEBUG, "Resource: \"" .. resource.name .. "\": testing pattern:" .. uri .. " against request:" .. request_uri)
+                ngx.log(ngx.DEBUG, "DEBUG: Resource: \"" .. resource_name .. "\": testing pattern:" .. uri .. " against request:" .. request_uri)
                 local match_depth = keycloak_uri_path_match(request_uri,uri) or 0
                 if match_depth > 0 then
-                    ngx.log(ngx.DEBUG, "Resource: \"" .. resource.name .. "\": URI pattern \"" .. uri .. "\" matches at depth " .. match_depth)
+                    ngx.log(ngx.DEBUG, "DEBUG: Resource: \"" .. resource_name .. "\": URI pattern \"" .. uri .. "\" matches at depth " .. match_depth)
                     if match_depth > found_depth then
-                        ngx.log(ngx.DEBUG, "Resource: \"" .. resource.name .. "\": URI pattern \"" .. uri .. "\" is deeper (" .. match_depth .. ") than previous match (" .. found_depth .. ")")
+                        ngx.log(ngx.DEBUG, "DEBUG: Resource: \"" .. resource_name .. "\": URI pattern \"" .. uri .. "\" is deeper (" .. match_depth .. ") than previous match (" .. found_depth .. ")")
                         found_depth = match_depth
                         found       = resource_id
                     else
-                        ngx.log(ngx.DEBUG, "Resource: \"" .. resource.name .. "\": URI pattern \"" .. uri .. "\" is shallower (" .. match_depth .. ") than previous match (" .. found_depth .. ")")
+                        ngx.log(ngx.DEBUG, "DEBUG: Resource: \"" .. resource_name .. "\": URI pattern \"" .. uri .. "\" is shallower (" .. match_depth .. ") than previous match (" .. found_depth .. ")")
                     end
                 else
-                    ngx.log(ngx.DEBUG, "Resource: \"" .. resource.name .. "\": URI pattern \"" .. uri .. "\" does not match")
+                    ngx.log(ngx.DEBUG, "DEBUG: Resource: \"" .. resource_name .. "\": URI pattern \"" .. uri .. "\" does not match")
                 end
             end
         else
-            ngx.log(ngx.DEBUG, "Resource: \"" .. resource.name .. "\": skipping URI check: disqualified by method scope.")
+            ngx.log(ngx.DEBUG, "DEBUG: Resource: \"" .. resource_name .. "\": skipping URI check: disqualified by method scope.")
         end
     end
     return found,found_depth
@@ -665,7 +666,8 @@ local function keycloak_resource_has_scope(resource_id, scope)
 
     local resource = keycloak_get_resource(resource_id)
     if resource == nil then
-        ngx.log(ngx.ERR, "Resource id \"" .. resource_id .. "\" not found!")
+        -- TODO: warn log level
+        ngx.log(ngx.ERR, "WARNING: Resource id \"" .. resource_id .. "\" not found!") -- non-fatal error
         return false
     end
 
@@ -753,8 +755,8 @@ function keycloak.authorize()
 
     if session.present == nil then
         session:close()
-        ngx.log(ngx.DEBUG, "No session present: access forbidden.")
         return ngx.HTTP_FORBIDDEN
+        ngx.log(ngx.DEBUG, "DEBUG: No session present: access forbidden.")
     end
 
     local session_token = session.data.access_token
@@ -762,14 +764,15 @@ function keycloak.authorize()
 
     -- catch empty access token
     if session_token == nil then
-        ngx.log(ngx.ERR, "Session token is nil: access forbidden.")
         return ngx.HTTP_FORBIDDEN
+        -- TODO: warn log level
+        ngx.log(ngx.ERR, "WARNING: Session token is nil: access forbidden.") -- non-fatal error
     end
 
     -- session_token is not null: check type
     assert(type(session_token) == "string")
 
-    ngx.log(ngx.DEBUG, "Matching URI with Keycloak resources")
+    ngx.log(ngx.DEBUG, "DEBUG: Matching URI with Keycloak resources")
     local resource_id = keycloak_resourceid_for_request()
 
     -- this defines the default policy for logged-in users.
@@ -777,7 +780,8 @@ function keycloak.authorize()
     -- TODO: this should be based on the "enforcing" mode in KeyCloak
     -- forbidden if no matching resources found
     if resource_id == nil then
-        ngx.log(ngx.ERR, "No matching resources: access forbidden.")
+        -- TODO: warn log level
+        ngx.log(ngx.ERR, "WARNING: No matching resources: access forbidden.") -- non-fatal error
         return ngx.HTTP_FORBIDDEN
     end
 
@@ -796,7 +800,7 @@ function keycloak.authorize()
     end
     -- catch authorization error (eg. not authorized)
     if decision.error ~= nil then
-        ngx.log(ngx.ERR, "Keycloak returned authorization error: " .. cjson_s.encode(decision))
+        ngx.log(ngx.DEBUG, "DEBUG: Setting HTTP_FORBIDDEN in session for resource_id: " .. resource_id)
         return ngx.HTTP_FORBIDDEN
     end
     -- catch unknown Keycloak response
@@ -806,7 +810,8 @@ function keycloak.authorize()
         ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
     end
 
-    ngx.log(ngx.DEBUG, "Keycloak authorization successful.")
+    ngx.log(ngx.DEBUG, "DEBUG: Keycloak authorization successful resource_id: " .. resource_id)
+    ngx.log(ngx.DEBUG, "DEBUG: Setting HTTP_FORBIDDEN in session for resource_id: " .. resource_id)
     -- authz successful
     return ngx.HTTP_OK
 end
@@ -830,7 +835,7 @@ function keycloak.authorize_anonymous(anonymous_scope)
         elseif config["anonymous_policy_mode"] == "enforcing" then
             return ngx.HTTP_UNAUTHORIZED
         else -- invalid anonymous_policy_mode
-            ngx.log(ngx.ERR, "Unexpected anonymous_policy_mode: " .. tostring(config["anonymous_policy_mode"] == "enforcing"))
+            ngx.log(ngx.ERR, "Unexpected anonymous_policy_mode: " .. tostring(config["anonymous_policy_mode"] == "enforcing")) -- fatal
             return ngx.DECLINED
         end
     end
