@@ -675,6 +675,7 @@ local function keycloak_resourceid_for_request(request_uri,request_method)
 
     for resource_id,resource in pairs(resources) do
         ngx.log(ngx.DEBUG, "DEBUG: Trying resource: \"" .. tostring(resource.name) .. "\"")
+        local resource_name = resource.name
 
         local resource_scopes = keycloak_resource_scope_hash_to_lookup_table(resource.resource_scopes)
         -- search for any method scopes (scopes mapped to HTTP methods)
