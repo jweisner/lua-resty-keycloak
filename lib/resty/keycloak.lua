@@ -859,7 +859,6 @@ function keycloak.authorize()
     end
 
     local session_token = session.data.access_token
-    session:close()
 
     -- catch empty access token
     if session_token == nil then
@@ -881,6 +880,7 @@ function keycloak.authorize()
     if resource_id == nil then
         -- TODO: warn log level
         ngx.log(ngx.ERR, "WARNING: No matching resources: access forbidden.") -- non-fatal error
+        session:close()
         return ngx.HTTP_FORBIDDEN
     end
 
@@ -907,6 +907,7 @@ function keycloak.authorize()
 
     -- catch decision unexpected return type
     if type(decision) ~= "table" then
+        session:close()
         ngx.status = 500
         ngx.log(ngx.ERR, "Unexpected Keycloak decision return data type: " .. type(decision))
         ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
@@ -921,6 +922,7 @@ function keycloak.authorize()
     end
     -- catch unknown Keycloak response
     if decision.result ~= true then
+        session:close()
         ngx.status = 500
         ngx.log(ngx.ERR, "Unexpected Keycloak decision content: " .. cjson_s.encode(decision))
         ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
@@ -930,6 +932,7 @@ function keycloak.authorize()
     ngx.log(ngx.DEBUG, "DEBUG: Setting HTTP_FORBIDDEN in session for resource_id: " .. resource_id)
     -- cache the result in the session data
     session.data.authorized[resource_id] = ngx.HTTP_OK
+    session:close()
     -- authz successful
     return ngx.HTTP_OK
 end
