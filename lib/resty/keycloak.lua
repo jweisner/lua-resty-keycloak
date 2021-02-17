@@ -1,6 +1,7 @@
 local require      = require
 local cjson        = require("cjson")
 local cjson_s      = require("cjson.safe")
+local messagepack  = require("MessagePack")
 local r_env        = require("resty.env")
 local http         = require("resty.http")
 local r_session    = require("resty.session")
@@ -125,6 +126,79 @@ end
 -----------
 -- Private Functions
 
+-- serializes data for shared cache or kv store
+local function keycloak_serialize(data)
+    return messagepack.pack(data)
+end
+
+-- serializes data for shared cache or kv store
+local function keycloak_unserialize(packed)
+    if packed == nil then return packed end -- only unpack if there is data to unpack
+
+    return messagepack.unpack(packed)
+end
+
+-- This function is copied from resty.openidc
+-- set value in server-wide cache if available
+local function keycloak_cache_set(dictname, key, value, exp)
+    assert(type(dictname) == "string")
+    assert(type(key)      == "string")
+    assert(type(exp)      == "number" and not ( tostring(exp):find('%.')) ) -- forces integer
+
+    -- TODO: redis integration
+    local nginxdict = ngx.shared[dictname]
+
+    if not nginxdict then
+        -- TODO: warn log level
+        ngx.log(ngx.WARN, "WARNING: Missing Nginx lua_shared_dict " .. dictname)
+    end
+
+    if nginxdict and (exp > 0) then
+        local success, err, forcible = nginxdict:set(key, keycloak_serialize(value), exp)
+        ngx.log(ngx.DEBUG, "DEBUG: cache set: success=", success, " err=", err, " forcible=", forcible)
+        if err then
+            -- TODO: warn log level
+            ngx.log(ngx.WARN, "WARNING: nginx cache rejected incompatible data: " .. tostring(value))
+        end
+    end
+end
+
+-- This function is copied from resty.openidc
+-- retrieve value from server-wide cache if available
+local function keycloak_cache_get(dictname, key)
+    -- TODO: redis integration
+    local dict = ngx.shared[dictname]
+    local value
+
+    if not dict then
+        -- TODO: warn log level
+        ngx.log(ngx.WARN, "WARNING: Missing Nginx lua_shared_dict " .. dictname)
+    end
+
+    if dict then
+        value = keycloak_unserialize(dict:get(key))
+        if value then ngx.log(ngx.DEBUG, "DEBUG: cache hit: dictname=", dictname, " key=", key) end
+    end
+    return value
+end
+
+-- This function is copied from resty.openidc
+-- invalidate values of server-wide cache
+local function keycloak_cache_invalidate(dictname)
+    -- TODO: redis integration
+    local dict = ngx.shared[dictname]
+
+    if not dict then
+        -- TODO: warn log level
+        ngx.log(ngx.WARN, "WARNING: Missing Nginx lua_shared_dict " .. dictname)
+    end
+
+    if dict then
+        ngx.log(ngx.DEBUG, "DEBUG: flushing cache for " .. dictname)
+        dict.flush_all(dict)
+        local nbr = dict.flush_expired(dict)
+    end
+end
 
 -- Returns KeyCloak client configuration as a Lua table.
 -- Pulls in all values from defaults (keycloak_default_config)
@@ -149,9 +223,19 @@ end
 
 -- returns the keycloak configuration from cache, or calls keycloak_get_config to calculate
 local function keycloak_config()
-    -- TODO: cache keycloak config
-    local config = keycloak_get_config()
-    return keycloak_merge(config,keycloak_default_config)
+    local config = keycloak_cache_get("keycloak_config", "config")
+
+    if config then
+        ngx.log(ngx.DEBUG, "DEBUG: keycloak config cache HIT")
+    end
+
+    if not config then
+        ngx.log(ngx.DEBUG, "DEBUG: keycloak config cache MISS")
+        config = keycloak_get_config()
+        keycloak_cache_set("keycloak_config", "config", config, keycloak_cache_expiry["keycloak_config"])
+    end
+
+    return config
 end
 
 -- returns the base URL for the configured Keycloak realm
@@ -180,42 +264,6 @@ local function keycloak_discovery_url(endpoint_type)
     end
 
     return keycloak_realm_url() .. "/" .. keycloak_realm_discovery_endpoints["openid"]
-end
-
--- This function is copied from resty.openidc
--- set value in server-wide cache if available
-local function keycloak_cache_set(type, key, value, exp)
-    -- TODO: redis integration
-    local dict = ngx.shared[type]
-    if dict and (exp > 0) then
-        local success, err, forcible = dict:set(key, value, exp)
-        ngx.log(ngx.DEBUG, "cache set: success=", success, " err=", err, " forcible=", forcible)
-    end
-end
-
--- This function is copied from resty.openidc
--- retrieve value from server-wide cache if available
-local function keycloak_cache_get(type, key)
-    -- TODO: redis integration
-    local dict = ngx.shared[type]
-    local value
-    if dict then
-        value = dict:get(key)
-        if value then ngx.log(ngx.DEBUG, "cache hit: type=", type, " key=", key) end
-    end
-    return value
-end
-
--- This function is copied from resty.openidc
--- invalidate values of server-wide cache
-local function keycloak_cache_invalidate(type)
-    -- TODO: redis integration
-    local dict = ngx.shared[type]
-    if dict then
-        ngx.log(ngx.DEBUG, "flushing cache for " .. type)
-        dict.flush_all(dict)
-        local nbr = dict.flush_expired(dict)
-    end
 end
 
 -- fetch the OpenID discovery document for the given endpoint type
@@ -274,8 +322,12 @@ local function keycloak_discovery(endpoint_type)
         ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
     end
 
-    -- TODO: cache
-    local discovery = keycloak_get_discovery(endpoint_type)
+    local discovery = keycloak_cache_get("keycloak_discovery", endpoint_type)
+
+    if not discovery then
+        discovery = keycloak_get_discovery(endpoint_type)
+        keycloak_cache_set("keycloak_discovery", endpoint_type, discovery, keycloak_cache_expiry["keycloak_discovery"])
+    end
 
     return discovery
 end
@@ -439,11 +491,14 @@ local function keycloak_get_resource_set()
 end
 
 local function keycloak_resource_set()
-    -- TODO: cache
+    local resource_set = keycloak_cache_get("keycloak_resource_set", "resource_set")
 
-    local resource_set = keycloak_get_resource_set()
+    if not resource_set then
+        resource_set = keycloak_get_resource_set()
+        keycloak_cache_set("keycloak_resource_set", "resource_set", resource_set, keycloak_cache_expiry["keycloak_resource_set"])
+    end
+
     assert(type(resource_set) == "table")
-
     return resource_set
 end
 
@@ -464,8 +519,13 @@ end
 local function keycloak_resource(resource_id)
     assert(type(resource_id) == "string")
 
-    -- TODO: cache
-    local resource = keycloak_get_resource(resource_id)
+    local resource = keycloak_cache_get("keycloak_resource", resource_id)
+
+    if not resource then
+        resource = keycloak_get_resource(resource_id)
+        keycloak_cache_set("keycloak_resource", resource_id, resource, keycloak_cache_expiry["keycloak_resource"])
+    end
+
     assert(type(resource) == "table")
 
     return resource
@@ -589,6 +649,12 @@ end
 local function keycloak_resourceid_for_request(request_uri,request_method)
     local request_uri               = request_uri or ngx.var.request_uri
     local request_method            = request_method or ngx.req.get_method()
+
+    local cached_resourceid = keycloak_cache_get("keycloak_request_resourceid", ngx.md5(request_uri..request_method))
+    if cached_resourceid then
+        return cached_resourceid
+    end
+
     local request_method_scope      = keycloak_request_method_to_scope(request_method)
     local resources,resources_count = keycloak_resources()
 
@@ -647,6 +713,8 @@ local function keycloak_resourceid_for_request(request_uri,request_method)
         end
     end
     return found,found_depth
+
+    keycloak_cache_set("keycloak_request_resourceid", ngx.md5(request_uri..request_method), found, keycloak_cache_expiry["keycloak_request_resourceid"])
 end
 
 --[[
@@ -708,12 +776,16 @@ end
     returns the SA access token as a string
 --]]
 function keycloak.service_account_token()
-    -- TODO: cache
+    local sa_token = keycloak_cache_get("keycloak_config", "sa_token")
 
-    local access_token = keycloak_get_service_account_token()
-    assert(type(access_token) == "string")
+    if not sa_token then
+        sa_token = keycloak_get_service_account_token()
+        keycloak_cache_set("keycloak_config", "sa_token", sa_token, keycloak_cache_expiry["keycloak_config"])
+    end
 
-    return access_token
+    assert(type(sa_token) == "string")
+
+    return sa_token
 end
 
 --[[
@@ -733,12 +805,7 @@ function keycloak.decision(access_token, resource_id)
     assert(type(access_token) == "string")
     assert(type(resource_id)  == "string")
 
-    -- TODO: cache
-    local decision,err = keycloak_get_decision(access_token, resource_id)
-
-    -- TODO: handle err... not sure when KC is allowed to return 403
-
-    return decision,err
+    return keycloak_get_decision(access_token, resource_id)
 end
 
 function keycloak.authenticate(openidc_opts)
@@ -810,7 +877,20 @@ function keycloak.authorize()
     -- we have a resource match
     ngx.log(ngx.DEBUG, "Matched resource ID: " .. resource_id)
 
-    -- TODO: cache session_token,resource_id,decision
+    -- set up authorization table in session if not present
+    if session.data.authorized == nil then
+        ngx.log(ngx.DEBUG, "DEBUG: No authorization table found in session data.")
+        session.data.authorized = {}
+    end
+
+    assert(type(session.data.authorized) == "table")
+
+    -- return cached authorization result if present
+    if session.data.authorized[resource_id] ~= nil then
+        ngx.log(ngx.DEBUG, "DEBUG: Found existing decision in session for resource id: " .. resource_id)
+        session:close()
+        return session.data.authorized[resource_id]
+    end
     local decision,decision_err = keycloak.decision(session_token,resource_id)
     -- TODO: decision request will return 403 error if no permissions mapped to resource!
 
@@ -823,6 +903,9 @@ function keycloak.authorize()
     -- catch authorization error (eg. not authorized)
     if decision.error ~= nil then
         ngx.log(ngx.DEBUG, "DEBUG: Setting HTTP_FORBIDDEN in session for resource_id: " .. resource_id)
+        -- cache the result in the session data
+        session.data.authorized[resource_id] = ngx.HTTP_FORBIDDEN
+        session:close()
         return ngx.HTTP_FORBIDDEN
     end
     -- catch unknown Keycloak response
@@ -834,6 +917,8 @@ function keycloak.authorize()
 
     ngx.log(ngx.DEBUG, "DEBUG: Keycloak authorization successful resource_id: " .. resource_id)
     ngx.log(ngx.DEBUG, "DEBUG: Setting HTTP_FORBIDDEN in session for resource_id: " .. resource_id)
+    -- cache the result in the session data
+    session.data.authorized[resource_id] = ngx.HTTP_OK
     -- authz successful
     return ngx.HTTP_OK
 end
@@ -846,6 +931,12 @@ function keycloak.authorize_anonymous(anonymous_scope)
     -- decline to make a decision if anonymous enforcing disabled
     if config["anonymous_policy_mode"] == "disabled" then
         return ngx.DECLINED
+    end
+
+    local cache_result = keycloak_cache_get("keycloak_anonymous", ngx.md5(ngx.request_uri))
+
+    if cache_result then
+        return cache_result
     end
 
     local resource_id = keycloak_resourceid_for_request()
