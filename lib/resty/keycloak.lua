@@ -20,6 +20,7 @@ local ngx          = ngx or ngx_harness -- TODO: dynamically load Nginx test har
 -- TODO: implement "busted" unit testing
 -- TOTO: I miss the rains down in Africa
 -- TODO: migrate to OOP?
+-- TODO: clean up unnecessary DEBUG statements
 
 -- initialize the resty-keycloak instance
 local keycloak = {
