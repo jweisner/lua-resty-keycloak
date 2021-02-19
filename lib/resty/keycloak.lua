@@ -38,6 +38,11 @@ local keycloak_default_config = {
     realm                 = "master",
 }
 
+-- IDP assertions to export to Nginx variable space
+keycloak_default_config["export_assertions"] = {
+    "" = "keycloak_user"
+}
+
 -- list of all caches used in this code
 -- this is used by keycloak.invalidate_caches()
 --
