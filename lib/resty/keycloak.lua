@@ -6,21 +6,22 @@ local r_env        = require("resty.env")
 local http         = require("resty.http")
 local r_session    = require("resty.session")
 local openidc      = require("resty.openidc")
-local redis = {} -- TODO: dynamically load the redis code if needed
+local redis        = {} -- TODO dynamically load the redis code if needed
 local string       = string
 local ipairs       = ipairs
 local pairs        = pairs
 local type         = type
--- TODO: use the dynamic loader here to avoid "undefined global ngx"
+-- TODO use the dynamic loader here to avoid "undefined global ngx"
 local ngx_harness  = {}
 ngx_harness["log"] = function (log, message) end
-local ngx          = ngx or ngx_harness -- TODO: dynamically load Nginx test harness
+local ngx          = ngx or ngx_harness -- TODO dynamically load Nginx test harness
+-- TODO investigate https://github.com/openresty/test-nginx
 
--- TODO: split this code into libraries and dynamically load the larger parts
--- TODO: implement "busted" unit testing
--- TOTO: I miss the rains down in Africa
--- TODO: migrate to OOP?
--- TODO: clean up unnecessary DEBUG statements
+-- TODO split this code into libraries and dynamically load the larger parts
+-- TODO implement "busted" unit testing
+-- TOTO I miss the rains down in Africa
+-- TODO migrate to OOP?
+-- TODO clean up unnecessary DEBUG statements
 
 -- initialize the resty-keycloak instance
 local keycloak = {
@@ -40,7 +41,7 @@ local keycloak_default_config = {
 
 -- IDP assertions to export to Nginx variable space
 keycloak_default_config["export_assertions"] = {
-    "" = "keycloak_user"
+    remote_user = "keycloak_user"
 }
 
 -- list of all caches used in this code
@@ -89,7 +90,7 @@ local keycloak_scope_for_method = {
 }
 
 -- timeouts used for httpc client calls (in milliseconds)
--- TODO: move timeouts to config
+-- TODO move timeouts to config
 local keycloak_http_timeouts = {
     connect_timeout = 10000,
     send_timeout    = 5000,
@@ -157,11 +158,11 @@ local function keycloak_cache_set(dictname, key, value, exp)
     assert(type(key)      == "string")
     assert(type(exp)      == "number" and not ( tostring(exp):find('%.')) ) -- forces integer
 
-    -- TODO: redis integration
+    -- TODO redis integration
     local nginxdict = ngx.shared[dictname]
 
     if not nginxdict then
-        -- TODO: warn log level
+        -- TODO warn log level
         ngx.log(ngx.WARN, "WARNING: Missing Nginx lua_shared_dict " .. dictname)
     end
 
@@ -169,7 +170,7 @@ local function keycloak_cache_set(dictname, key, value, exp)
         local success, err, forcible = nginxdict:set(key, keycloak_serialize(value), exp)
         ngx.log(ngx.DEBUG, "DEBUG: cache set: success=", success, " err=", err, " forcible=", forcible)
         if err then
-            -- TODO: warn log level
+            -- TODO warn log level
             ngx.log(ngx.WARN, "WARNING: nginx cache rejected incompatible data: " .. tostring(value))
         end
     end
@@ -178,12 +179,12 @@ end
 -- This function is copied from resty.openidc
 -- retrieve value from server-wide cache if available
 local function keycloak_cache_get(dictname, key)
-    -- TODO: redis integration
+    -- TODO redis integration
     local dict = ngx.shared[dictname]
     local value
 
     if not dict then
-        -- TODO: warn log level
+        -- TODO warn log level
         ngx.log(ngx.WARN, "WARNING: Missing Nginx lua_shared_dict " .. dictname)
     end
 
@@ -197,11 +198,11 @@ end
 -- This function is copied from resty.openidc
 -- invalidate values of server-wide cache
 local function keycloak_cache_invalidate(dictname)
-    -- TODO: redis integration
+    -- TODO redis integration
     local dict = ngx.shared[dictname]
 
     if not dict then
-        -- TODO: warn log level
+        -- TODO warn log level
         ngx.log(ngx.WARN, "WARNING: Missing Nginx lua_shared_dict " .. dictname)
     end
 
@@ -347,7 +348,7 @@ end
 
 -- converts HTTP method into Keycloak scope or "extended" if unknown
 -- eg. GET => read
--- TODO: this function is not used. remove?
+-- TODO this function is not used. remove?
 local function method_scope_for_method(method)
     assert(type(method) == "string")
 
@@ -426,7 +427,7 @@ local function keycloak_call_endpoint(endpoint_type, endpoint_name, headers, bod
         keycloak_http_timeouts["read_timeout"]
     )
 
-    -- TODO: do we need to do anything with httpc proxy here for proxied servers?
+    -- TODO do we need to do anything with httpc proxy here for proxied servers?
 
     local httpc_params = {
         method     = method,
@@ -437,10 +438,10 @@ local function keycloak_call_endpoint(endpoint_type, endpoint_name, headers, bod
     }
 
     local res, err = httpc:request_uri(endpoint_url, httpc_params)
-    -- TODO: check response HTTP error code
+    -- TODO check response HTTP error code
     -- check for HTTP client errors
     if err then
-        -- TODO: warn log level
+        -- TODO warn log level
         ngx.log(ngx.ERR, "WARNING: Error calling endpoint " .. endpoint_name .. ": " .. err) -- non-fatal error
         return nil,err
     end
@@ -484,7 +485,7 @@ local function keycloak_get_decision(access_token, resource_id)
     -- TODO validate what happens here with permission denied. KC will return 403?
     local res,err = keycloak_call_endpoint(endpoint_type, endpoint_name, headers, body)
 
-    -- TODO: handle err here or in wrapper?
+    -- TODO handle err here or in wrapper?
 
     return res,err
 end
@@ -498,7 +499,7 @@ local function keycloak_get_resource_set()
     local params            = {}
     local resource_set,err  = keycloak_call_endpoint(endpoint_type, endpoint_name, headers, body, params, method)
 
-    -- TODO: handle err
+    -- TODO handle err
 
     return resource_set
 end
@@ -524,7 +525,7 @@ local function keycloak_get_resource(resource_id)
     local method        = "GET"
     local resource,err  = keycloak_call_endpoint(endpoint_type, endpoint_name, headers, body, params, method)
 
-    -- TODO: handle err
+    -- TODO handle err
 
     return resource
 end
@@ -566,7 +567,7 @@ end
 
 -- this global has to be declared here; after all of the required functions are defined, and before keycloak_openidc_opts()
 local keycloak_openidc_defaults = {
-    -- TODO: callback URI needs to be configurable
+    -- TODO callback URI needs to be configurable
     client_id     = keycloak_config()["client_id"],
     client_secret = keycloak_config()["client_secret"],
     discovery     = keycloak_discovery_url("openid"),
@@ -770,7 +771,7 @@ local function keycloak_resource_has_scope(resource_id, scope)
 
     local resource = keycloak_get_resource(resource_id)
     if resource == nil then
-        -- TODO: warn log level
+        -- TODO warn log level
         ngx.log(ngx.ERR, "WARNING: Resource id \"" .. resource_id .. "\" not found!") -- non-fatal error
         return false
     end
@@ -868,7 +869,7 @@ function keycloak.authorize()
 
     -- catch empty access token
     if session_token == nil then
-        -- TODO: warn log level
+        -- TODO warn log level
         ngx.log(ngx.ERR, "WARNING: Session token is nil: access forbidden.") -- non-fatal error
         session:close()
         return ngx.HTTP_UNAUTHORIZED
@@ -884,7 +885,7 @@ function keycloak.authorize()
     -- We are denying access to anything that doesn't match a resource in KeyCloak.
     -- forbidden if no matching resources found
     if resource_id == nil then
-        -- TODO: warn log level
+        -- TODO warn log level
         ngx.log(ngx.ERR, "WARNING: No matching resources: access forbidden.") -- non-fatal error
         session:close()
         return ngx.HTTP_FORBIDDEN
@@ -924,7 +925,7 @@ function keycloak.authorize()
         -- cache the result in the session data
         session.data.authorized[resource_id] = ngx.HTTP_FORBIDDEN
         session:close()
-        -- TODO: warn log level
+        -- TODO warn log level
         ngx.log(ngx.ERR, "WARNING: Keycloak returned authorization error: " .. cjson_s.encode(decision)) -- non-fatal error
         return ngx.HTTP_FORBIDDEN
     end
