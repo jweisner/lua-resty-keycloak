@@ -39,9 +39,17 @@ local keycloak_default_config = {
     realm                 = "master",
 }
 
--- IDP assertions to export to Nginx variable space
-keycloak_default_config["export_assertions"] = {
-    remote_user = "keycloak_user"
+-- token values to export to Nginx variable space
+-- these will have to be added to the token in the IDP configuration
+-- All of the oid_* values must be created in Nginx first
+-- TODO make token attributes configurable in Nginx
+keycloak_default_config["export_token_attributes"] = {
+    active     = "oid_active",
+    email      = "oid_email",
+    username   = "oid_username",
+    given_name = "oid_given_name",
+    first_name = "oid_first_name",
+    name       = "oid_name"
 }
 
 -- list of all caches used in this code
