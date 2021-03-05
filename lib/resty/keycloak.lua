@@ -447,7 +447,7 @@ end
 --
 -- returns response body table and error string from KeyCloak
 local function keycloak_get_decision(access_token, resource_id)
-    assert(type(access_token) == "string")
+    assert(type(access_token) == "string") -- access_token from session.data
     assert(type(resource_id)  == "string")
 
     local endpoint_name = "token_endpoint"
@@ -456,7 +456,7 @@ local function keycloak_get_decision(access_token, resource_id)
     local config        = keycloak_config()
 
     local headers = {
-        ["Authorization"] = "Bearer " .. access_token
+        ["Authorization"] = "Bearer " .. access_token -- session token
     }
 
     local body = {
