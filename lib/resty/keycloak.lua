@@ -768,6 +768,42 @@ local function keycloak_resource_has_scope(resource_id, scope)
     end
 end
 
+--[[
+    Introspect the access token to get the attributes
+
+    returns the token attributes as a table
+]]
+local function keycloak_token_introspect(access_token)
+    assert(type(access_token) == "string")
+
+    local config          = keycloak_config()
+    local request_headers = {}
+    local request_body    = {
+        token         = access_token,
+        client_id     = config['client_id'],
+        client_secret = config['client_secret']
+    }
+
+    local token_attributes,err = keycloak_call_endpoint("openid", "introspection_endpoint", request_headers, request_body, {}, "POST")
+
+    -- handle introspection endpoint errors
+    if err ~= nil then
+        ngx.log(ngx.ERR, "Error introspecting access token: " .. err)
+        ngx.status = 500
+        ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
+    end
+
+    -- handle introspection content errors
+    if token_attributes.error ~= nil then
+        ngx.log(ngx.ERR, "Error introspecting access token: " .. token_attributes.error)
+        ngx.status = 500
+        ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
+    end
+
+    ngx.log(ngx.DEBUG, "DEBUG: token_attributes: " .. cjson_s.encode(token_attributes))
+    assert(type(token_attributes) == "table")
+    return token_attributes
+end
 -----------
 -- Public Functions
 
