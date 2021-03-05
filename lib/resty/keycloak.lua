@@ -60,12 +60,12 @@ local keycloak_caches = {
 
 -- keycloak cache expiries
 local keycloak_cache_expiry = { }
-keycloak_cache_expiry["keycloak_anonymous"]          = 10 * 60
+keycloak_cache_expiry["keycloak_anonymous"]          =      10 * 60
 keycloak_cache_expiry["keycloak_config"]             = 24 * 60 * 60
 keycloak_cache_expiry["keycloak_discovery"]          = 24 * 60 * 60
-keycloak_cache_expiry["keycloak_request_resourceid"] = 10 * 60
-keycloak_cache_expiry["keycloak_resource_set"]       = 30 * 60
-keycloak_cache_expiry["keycloak_resource"]           = 10 * 60
+keycloak_cache_expiry["keycloak_request_resourceid"] =      10 * 60
+keycloak_cache_expiry["keycloak_resource_set"]       =      30 * 60
+keycloak_cache_expiry["keycloak_resource"]           =      10 * 60
 
 -- Keycloak URIs for service discovery
 local keycloak_realm_discovery_endpoints = {
