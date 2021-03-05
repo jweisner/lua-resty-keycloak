@@ -56,7 +56,6 @@ keycloak_default_config["export_token_attributes"] = {
 -- this is used by keycloak.invalidate_caches()
 --
 -- IMPORTANT: each one of these needs a "lua_shared_dict" in Nginx config 00-openresty.conf
---            the expiry in 00-openresty.conf ,ust be the same or higher than these values
 local keycloak_caches = {
     "keycloak_anonymous",
     "keycloak_config",
