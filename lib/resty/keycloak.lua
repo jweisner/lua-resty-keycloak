@@ -259,6 +259,53 @@ local function keycloak_config()
     return config
 end
 
+--[[
+    exports token attributes to Nginx variables
+
+    returns nothing
+]]
+local function keycloak_export_attributes(token_attributes)
+    assert(type(token_attributes) == "table")
+
+    local config = keycloak_config()
+
+    for key, value in pairs(config["export_token_attributes"]) do
+        ngx.var[value] = token_attributes[key] or "-"
+    end
+
+    ngx.log(ngx.DEBUG, "DEBUG: attribute username:" .. token_attributes["username"] .. " ngx.var[oid_username]: " .. ngx.var.oid_username)
+
+    -- "realm_roles" = join(',', realm_access['roles'])
+    --     "realm_access": {
+    --         "roles": [
+    --             "offline_access",
+    --             "uma_authorization",
+    --             "Current Employee"
+    --         ]
+    --     },
+    if type(token_attributes.realm_access.roles) == "table" then
+        ngx.var.oid_realm_roles = table.concat(token_attributes.realm_access.roles, ",")
+    else
+        ngx.var.oid_realm_roles = ""
+    end
+
+    -- "resource_roles" = join(',', resource_access['account']['roles'])
+    --     "resource_access": {
+    --         "account": {
+    --             "roles": [
+    --                 "manage-account",
+    --                 "manage-account-links",
+    --                 "view-profile"
+    --             ]
+    --         }
+    --     },
+    if type(token_attributes.resource_access.account.roles) == "table" then
+        ngx.var.oid_resource_roles = table.concat(token_attributes.resource_access.account.roles, ",")
+    else
+        ngx.var.oid_resource_roles = ""
+    end
+end
+
 -- returns the base URL for the configured Keycloak realm
 local function keycloak_realm_url()
     local config          = keycloak_config()
