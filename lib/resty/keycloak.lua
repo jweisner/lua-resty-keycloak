@@ -260,6 +260,20 @@ local function keycloak_config()
 end
 
 --[[
+    Clear all Nginx exported variables
+]]
+local function keycloak_clear_export_attributes()
+    local config = keycloak_config()
+
+    for key, value in pairs(config["export_token_attributes"]) do
+        ngx.var[value] = "-"
+    end
+
+    ngx.var.oid_realm_roles    = ""
+    ngx.var.oid_resource_roles = ""
+end
+
+--[[
     exports token attributes to Nginx variables
 
     returns nothing
