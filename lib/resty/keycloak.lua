@@ -804,6 +804,26 @@ local function keycloak_token_introspect(access_token)
     assert(type(token_attributes) == "table")
     return token_attributes
 end
+
+--[[
+    Fetch the token attributes from the session cache or inprospection
+
+    returns the token attributes as a table
+]]
+local function keycloak_token_atttributes(access_token)
+    assert(type(access_token) == "string")
+
+    local session = r_session.open()
+    local access_token_attributes = session.data.token_attributes
+
+    if type(access_token_attributes) == "table" then
+        ngx.log(ngx.DEBUG, "DEBUG: token_attributes cache HIT")
+        return access_token_attributes
+    end
+
+    return keycloak_token_introspect(access_token)
+end
+
 -----------
 -- Public Functions
 
