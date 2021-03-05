@@ -346,22 +346,6 @@ local function keycloak_discovery(endpoint_type)
     return discovery
 end
 
--- converts HTTP method into Keycloak scope or "extended" if unknown
--- eg. GET => read
--- TODO this function is not used. remove?
-local function method_scope_for_method(method)
-    assert(type(method) == "string")
-
-    local scope = "extended" -- this scope is returned for unknown HTTP methods (eg. WebDAV)
-
-    -- if we have mapped the HTTP request method to a Keycloak scope, use that
-    if keycloak_scope_for_method[method] ~= nil then
-        scope = keycloak_scope_for_method[method]
-    end
-
-    return scope
-end
-
 --[[
     make an HTTP request to a Keycloak endpoint
 
