@@ -986,6 +986,8 @@ function keycloak.authorize()
 
     -- session_token is not null: check type
     assert(type(session_token) == "string")
+    local token_attributes = keycloak_token_atttributes(session_token)
+    keycloak_export_attributes(token_attributes)
 
     ngx.log(ngx.DEBUG, "DEBUG: Matching URI with Keycloak resources")
     local resource_id = keycloak_resourceid_for_request()
