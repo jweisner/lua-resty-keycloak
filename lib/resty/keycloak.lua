@@ -868,8 +868,10 @@ local function keycloak_resource_has_scope(resource_id, scope)
     -- if it has been removed, and error out with an ISE. This way only one client
     -- gets an error, and it should fix itself on a page refresh
     if resource == nil then
+        keycloak_cache_invalidate("keycloak_resource_set")
+        keycloak_cache_invalidate("keycloak_resource")
         ngx.status = 500
-        ngx.log(ngx.ERR, "Resource id \"" .. resource_id .. "\" not found!")
+        ngx.log(ngx.ERR, "Resource id \"" .. resource_id .. "\" not found! Resource caches flushed.")
         ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
     end
 
