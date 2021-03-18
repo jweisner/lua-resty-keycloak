@@ -623,8 +623,12 @@ local function keycloak_get_resources()
     local count        = 0
 
     for k,resource_id in ipairs(resource_set) do
-        resources[resource_id] = keycloak_resource(resource_id)
-        count = count +1
+        local resource = keycloak_resource(resource_id)
+        -- if the resource fails to fetch, don't add it to the resource table
+        if resource ~= nil then
+            resources[resource_id] = keycloak_resource(resource_id)
+            count = count +1
+        end
     end
 
     return resources,count
