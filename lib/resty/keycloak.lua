@@ -162,6 +162,7 @@ end
 -- This function is copied from resty.openidc
 -- set value in server-wide cache if available
 local function keycloak_cache_set(dictname, key, value, exp)
+    -- BUG this doesn't seem to be working properly. Sessions are getting crossed somewhere.
     assert(type(dictname) == "string")
     assert(type(key)      == "string")
     assert(type(exp)      == "number" and not ( tostring(exp):find('%.')) ) -- forces integer
@@ -187,6 +188,7 @@ end
 -- This function is copied from resty.openidc
 -- retrieve value from server-wide cache if available
 local function keycloak_cache_get(dictname, key)
+    -- BUG this doesn't seem to be working properly. Sessions are getting crossed somewhere.
     -- TODO redis integration
     local dict = ngx.shared[dictname]
     local value
