@@ -548,7 +548,13 @@ local function keycloak_get_resource_set()
     local params            = {}
     local resource_set,err  = keycloak_call_endpoint(endpoint_type, endpoint_name, headers, body, params, method)
 
-    -- TODO handle err
+    -- handle err
+    if err ~= nil then
+        keycloak_cache_invalidate("keycloak_resource_set")
+        ngx.status = 500
+        ngx.log(ngx.ERR, "Error getting resource_set: " .. err)
+        ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
+    end
 
     return resource_set
 end
@@ -558,10 +564,10 @@ local function keycloak_resource_set()
 
     if not resource_set then
         resource_set = keycloak_get_resource_set()
-        keycloak_cache_set("keycloak_resource_set", "resource_set", resource_set, keycloak_cache_expiry["keycloak_resource_set"])
     end
 
     assert(type(resource_set) == "table")
+    keycloak_cache_set("keycloak_resource_set", "resource_set", resource_set, keycloak_cache_expiry["keycloak_resource_set"])
     return resource_set
 end
 
