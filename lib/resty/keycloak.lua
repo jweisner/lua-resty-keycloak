@@ -834,6 +834,14 @@ local function keycloak_resourceid_for_request(request_uri,request_method)
         end
     end
 
+    -- found is the id of the clostest resource match
+    -- stop here if no matches were found
+    if found == nil then
+        ngx.log(ngx.DEBUG, "DEBUG: no resource matches for URI and method")
+        return nil
+    end
+
+    assert(type("found") == "string")
     keycloak_cache_set("keycloak_request_resourceid", cache_key, found, keycloak_cache_expiry["keycloak_request_resourceid"])
     return found
 end
