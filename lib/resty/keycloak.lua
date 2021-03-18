@@ -179,8 +179,7 @@ local function keycloak_cache_set(dictname, key, value, exp)
         local success, err, forcible = nginxdict:set(key, keycloak_serialize(value), exp)
         ngx.log(ngx.DEBUG, "DEBUG: cache set: success=", success, " err=", err, " forcible=", forcible)
         if err then
-            -- TODO warn log level
-            ngx.log(ngx.WARN, "WARNING: nginx cache rejected incompatible data: " .. tostring(value))
+            ngx.log(ngx.ERR, "Nginx dict rejected incompatible data: " .. tostring(value))
         end
     end
 end
