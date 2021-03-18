@@ -581,6 +581,7 @@ local function keycloak_get_resource(resource_id)
     local resource,err  = keycloak_call_endpoint(endpoint_type, endpoint_name, headers, body, params, method)
 
     -- Handle error from call_endpoint
+    -- NOTE: this is not a fatal error, but needs to be properly handled by the callee
     if err ~= nil then
         ngx.log(ngx.ERR, "Error fetching resource " .. resource_id .. " from Keycloak: " .. err)
         resource = nil
