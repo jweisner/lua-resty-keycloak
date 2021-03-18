@@ -187,16 +187,26 @@ local function keycloak_cache_set(dictname, key, value, exp)
     -- TODO redis integration
     local nginxdict = ngx.shared[dictname]
 
+    -- invalid or unset Nginx dict
     if not nginxdict then
         ngx.log(ngx.WARN, "WARNING: Missing Nginx lua_shared_dict " .. dictname)
+        return false
     end
 
-    if nginxdict and (exp > 0) then
-        local success, err, forcible = nginxdict:set(key, keycloak_serialize(value), exp)
+    -- invalidate the cache on zero expiry
+    if exp == 0 then
+        ngx.log(ngx.DEBUG, "Received zero expiry, invalidating dict: " .. dictname)
+        keycloak_cache_invalidate(dictname)
+        return true
+    end
+
+    local success, err, forcible = nginxdict:set(key, keycloak_serialize(value), exp)
+    if err then
+        ngx.log(ngx.ERR, "Nginx dict rejected incompatible data: " .. tostring(value))
+        ngx.log(ngx.DEBUG, "Nginx rejected data. Flushing dict: " .. dictname)
+        keycloak_cache_invalidate(dictname)
+    else
         ngx.log(ngx.DEBUG, "DEBUG: cache set: success=", success, " err=", err, " forcible=", forcible)
-        if err then
-            ngx.log(ngx.ERR, "Nginx dict rejected incompatible data: " .. tostring(value))
-        end
     end
 end
 
