@@ -611,18 +611,40 @@ local function keycloak_resource(resource_id)
     return resource
 end
 
-local function keycloak_get_resources()
-    local resource_set = keycloak_resource_set()
-    local resources    = {}
-    local count        = 0
+local function keycloak_get_resources(fail_on_error)
+    local fail_on_error = fail_on_error or false
+    assert(type(fail_on_error) == "boolean")
+    local resource_set  = keycloak_resource_set()
+    local resources     = {}
+    local count         = 0
+    local try_again     = false
 
     for k,resource_id in ipairs(resource_set) do
         local resource = keycloak_resource(resource_id)
-        -- if the resource fails to fetch, don't add it to the resource table
         if resource ~= nil then
             resources[resource_id] = keycloak_resource(resource_id)
             count = count +1
+        else
+            -- if the resource fails to fetch, try again
+            -- this is logged in keycloak_resource()
+            try_again = true
+            break
         end
+    end
+
+    -- if we got an error fetching a resource, flush the caches and try again
+    if try_again and fail_on_error then
+        ngx.status = 500
+        ngx.log(ngx.ERR, "Failed to fetch resources")
+        ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
+    end
+
+    -- try again with a recursive call one last time
+    -- flush resource list and resource caches
+    if try_again and not fail_on_error then
+        keycloak_cache_invalidate("keycloak_resource_set")
+        keycloak_cache_invalidate("keycloak_resource")
+        resources,count = keycloak_get_resources(true) -- fail_on_error = true
     end
 
     return resources,count
