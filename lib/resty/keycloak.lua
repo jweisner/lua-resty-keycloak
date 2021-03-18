@@ -875,6 +875,8 @@ local function keycloak_resource_has_scope(resource_id, scope)
         ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
     end
 
+    assert(type(resource) == "table")
+
     local resource_scopes = keycloak_resource_scope_hash_to_lookup_table(resource.resource_scopes)
     if resource_scopes[scope] == true then
         return true
