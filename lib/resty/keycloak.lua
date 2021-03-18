@@ -187,7 +187,6 @@ local function keycloak_cache_set(dictname, key, value, exp)
     local nginxdict = ngx.shared[dictname]
 
     if not nginxdict then
-        -- TODO warn log level
         ngx.log(ngx.WARN, "WARNING: Missing Nginx lua_shared_dict " .. dictname)
     end
 
@@ -209,7 +208,6 @@ local function keycloak_cache_get(dictname, key)
     local value
 
     if not dict then
-        -- TODO warn log level
         ngx.log(ngx.WARN, "WARNING: Missing Nginx lua_shared_dict " .. dictname)
     end
 
@@ -493,7 +491,6 @@ local function keycloak_call_endpoint(endpoint_type, endpoint_name, headers, bod
     -- TODO check response HTTP error code
     -- check for HTTP client errors
     if err then
-        -- TODO warn log level
         ngx.log(ngx.ERR, "WARNING: Error calling endpoint " .. endpoint_name .. ": " .. err) -- non-fatal error
         return nil,err
     end
@@ -588,6 +585,7 @@ local function keycloak_resource(resource_id)
     local resource = keycloak_cache_get("keycloak_resource", resource_id)
 
     if not resource then
+        ngx.log(ngx.DEBUG, "DEBUG: cache miss fetching resource " .. resource_id)
         resource = keycloak_get_resource(resource_id)
         keycloak_cache_set("keycloak_resource", resource_id, resource, keycloak_cache_expiry["keycloak_resource"])
     end
@@ -977,8 +975,7 @@ function keycloak.authorize()
 
     -- catch empty access token
     if session_token == nil then
-        -- TODO warn log level
-        ngx.log(ngx.ERR, "WARNING: Session token is nil: access forbidden.") -- non-fatal error
+        ngx.log(ngx.WARN, "WARNING: Session token is nil: access forbidden.") -- non-fatal error
         session:close()
         return ngx.HTTP_UNAUTHORIZED
     end
@@ -995,8 +992,7 @@ function keycloak.authorize()
     -- We are denying access to anything that doesn't match a resource in KeyCloak.
     -- forbidden if no matching resources found
     if resource_id == nil then
-        -- TODO warn log level
-        ngx.log(ngx.ERR, "WARNING: No matching resources: access forbidden.") -- non-fatal error
+        ngx.log(ngx.WARN, "WARNING: No matching resources: access forbidden.") -- non-fatal error
         session:close()
         return ngx.HTTP_FORBIDDEN
     end
@@ -1035,8 +1031,7 @@ function keycloak.authorize()
         -- cache the result in the session data
         session.data.authorized[resource_id] = ngx.HTTP_FORBIDDEN
         session:close()
-        -- TODO warn log level
-        ngx.log(ngx.ERR, "WARNING: Keycloak returned authorization error: " .. cjson_s.encode(decision)) -- non-fatal error
+        ngx.log(ngx.WARN, "WARNING: Keycloak returned authorization error: " .. cjson_s.encode(decision)) -- non-fatal error
         return ngx.HTTP_FORBIDDEN
     end
     -- catch unknown Keycloak response
@@ -1047,8 +1042,9 @@ function keycloak.authorize()
         ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
     end
 
-    ngx.log(ngx.DEBUG, "DEBUG: Keycloak authorization successful resource_id: " .. resource_id)
-    ngx.log(ngx.DEBUG, "DEBUG: Setting HTTP_FORBIDDEN in session for resource_id: " .. resource_id)
+    -- TODO debug log level
+    ngx.log(ngx.ERR, "DEBUG: Keycloak authorization successful resource_id: " .. resource_id)
+    ngx.log(ngx.ERR, "DEBUG: Setting HTTP_FORBIDDEN in session for resource_id: " .. resource_id)
     -- cache the result in the session data
     session.data.authorized[resource_id] = ngx.HTTP_OK
     session:close()
