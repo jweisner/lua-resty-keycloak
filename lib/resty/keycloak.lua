@@ -841,10 +841,12 @@ local function keycloak_resource_has_scope(resource_id, scope)
     assert(type(scope)       == "string")
 
     local resource = keycloak_resource(resource_id)
+    -- we should never have a resource ID in the list that can't be fetched from the UMA2 endpoint
+    -- this needs to be caught and handled in the resource get
     if resource == nil then
-        -- TODO warn log level
-        ngx.log(ngx.ERR, "WARNING: Resource id \"" .. resource_id .. "\" not found!") -- non-fatal error
-        return false
+        ngx.status = 500
+        ngx.log(ngx.ERR, "Resource id \"" .. resource_id .. "\" not found!")
+        ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
     end
 
     local resource_scopes = keycloak_resource_scope_hash_to_lookup_table(resource.resource_scopes)
