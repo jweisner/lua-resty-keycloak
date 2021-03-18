@@ -188,7 +188,6 @@ local function keycloak_cache_set(dictname, key, value, exp)
     local nginxdict = ngx.shared[dictname]
 
     if not nginxdict then
-        -- TODO warn log level
         ngx.log(ngx.WARN, "WARNING: Missing Nginx lua_shared_dict " .. dictname)
     end
 
@@ -209,7 +208,6 @@ local function keycloak_cache_get(dictname, key)
     local value
 
     if not dict then
-        -- TODO warn log level
         ngx.log(ngx.WARN, "WARNING: Missing Nginx lua_shared_dict " .. dictname)
     end
 
@@ -1052,7 +1050,6 @@ function keycloak.authorize()
 
     -- set up authorization table in session if not present
     if session.data.authorized == nil then
-        -- TODO debug log level
         ngx.log(ngx.DEBUG, "DEBUG: No authorization table found in session data.")
         session.data.authorized = {}
     end
