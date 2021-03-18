@@ -862,10 +862,10 @@ local function keycloak_resource_has_scope(resource_id, scope)
 
     local resource = keycloak_resource(resource_id)
 
-    -- if there is an error fetchign a known resource ID, the UMA2 endpoint
-    -- may be down, or it may have been recently removed. The safest thing to
-    -- do here is flush the caches so other processes don't try to use it again
-    -- if it has been removed, and error out with an ISE. This way only one client
+    -- if there is an error fetching a known resource ID, the UMA2 endpoint
+    -- may be down, or the resource may have been recently removed. The safest thing to
+    -- do here is flush the caches so other processes don't try to use it again if it
+    -- has been removed, and error out with an ISE. This way only one client
     -- gets an error, and it should fix itself on a page refresh
     if resource == nil then
         keycloak_cache_invalidate("keycloak_resource_set")
