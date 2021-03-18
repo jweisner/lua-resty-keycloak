@@ -768,7 +768,7 @@ local function keycloak_resourceid_for_request(request_uri,request_method)
     local request_method = request_method or ngx.req.get_method()
     -- cache key is the request method plus the request uri
     --   eg. GET/foo/bar.html
-    local cache_key      = ngx.md5(request_method .. ngx.request_uri) -- shared cache key
+    local cache_key      = ngx.md5(request_method .. request_uri) -- shared cache key
 
     local cached_resourceid = keycloak_cache_get("keycloak_request_resourceid", cache_key)
     if cached_resourceid then
