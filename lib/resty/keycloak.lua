@@ -1135,6 +1135,8 @@ function keycloak.authorize_anonymous(anonymous_scope)
         end
     end
 
+    -- TODO look for existing session data in case we have data for logging
+
     if keycloak_resource_has_scope(resource_id,anonymous_scope) == true then
         return ngx.HTTP_OK
     else
