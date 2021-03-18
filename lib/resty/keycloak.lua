@@ -771,7 +771,7 @@ local function keycloak_resourceid_for_request(request_uri,request_method)
 
     -- initialize "best match"
     local found_depth = 0
-    local found       = nil -- this will be replaced by the ID of the closest uri match
+    local found       = nil -- this will be replaced by the ID of the closest uri match. nil if none
 
     for resource_id,resource in pairs(resources) do
         local resource_name = tostring(resource.name)
