@@ -602,7 +602,16 @@ local function keycloak_resource(resource_id)
         keycloak_cache_set("keycloak_resource", resource_id, resource, keycloak_cache_expiry["keycloak_resource"])
     end
 
-    assert(type(resource) == "table")
+    -- handle failure to retrieve resource from any source. This can happen when keycloak is down and the resource list is still cached.
+    --  invalidate the resource cache
+    --  invalidate the resource list
+    if not resource or not type(resource == "table") then
+        ngx.log(ngx.ERR, "Unable to fetch " .. resource_id)
+        resource = nil
+        -- invalidate the keycloak_resource caches in case the resource list has been altered
+        keycloak_cache_invalidate("keycloak_resource_set")
+        keycloak_cache_invalidate("keycloak_resource")
+    end
 
     return resource
 end
