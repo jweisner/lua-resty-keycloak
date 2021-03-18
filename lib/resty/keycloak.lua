@@ -592,9 +592,12 @@ end
 local function keycloak_resource(resource_id)
     assert(type(resource_id) == "string")
 
+    -- attempt to retrieve resource from Nginx cache
     local resource = keycloak_cache_get("keycloak_resource", resource_id)
 
+    -- retrieve resource from KeyCloak
     if not resource then
+        ngx.log(ngx.DEBUG, "DEBUG: cache miss fetching resource " .. resource_id)
         resource = keycloak_get_resource(resource_id)
         keycloak_cache_set("keycloak_resource", resource_id, resource, keycloak_cache_expiry["keycloak_resource"])
     end
