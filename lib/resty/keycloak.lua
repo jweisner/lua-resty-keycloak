@@ -160,6 +160,23 @@ local function keycloak_unserialize(packed)
 end
 
 -- This function is copied from resty.openidc
+-- invalidate values of server-wide cache
+local function keycloak_cache_invalidate(dictname)
+    -- TODO redis integration
+    local dict = ngx.shared[dictname]
+
+    if not dict then
+        ngx.log(ngx.WARN, "WARNING: Missing Nginx lua_shared_dict " .. dictname)
+    end
+
+    if dict then
+        ngx.log(ngx.DEBUG, "DEBUG: flushing cache for " .. dictname)
+        dict.flush_all(dict)
+        local nbr = dict.flush_expired(dict)
+    end
+end
+
+-- This function is copied from resty.openidc
 -- set value in server-wide cache if available
 local function keycloak_cache_set(dictname, key, value, exp)
     -- BUG this doesn't seem to be working properly. Sessions are getting crossed somewhere.
@@ -202,24 +219,6 @@ local function keycloak_cache_get(dictname, key)
         if value then ngx.log(ngx.DEBUG, "DEBUG: cache hit: dictname=", dictname, " key=", key) end
     end
     return value
-end
-
--- This function is copied from resty.openidc
--- invalidate values of server-wide cache
-local function keycloak_cache_invalidate(dictname)
-    -- TODO redis integration
-    local dict = ngx.shared[dictname]
-
-    if not dict then
-        -- TODO warn log level
-        ngx.log(ngx.WARN, "WARNING: Missing Nginx lua_shared_dict " .. dictname)
-    end
-
-    if dict then
-        ngx.log(ngx.DEBUG, "DEBUG: flushing cache for " .. dictname)
-        dict.flush_all(dict)
-        local nbr = dict.flush_expired(dict)
-    end
 end
 
 -- Returns KeyCloak client configuration as a Lua table.
