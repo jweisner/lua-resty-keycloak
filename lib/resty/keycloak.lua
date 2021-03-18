@@ -491,7 +491,6 @@ local function keycloak_call_endpoint(endpoint_type, endpoint_name, headers, bod
     -- TODO check response HTTP error code
     -- check for HTTP client errors
     if err then
-        -- TODO warn log level
         ngx.log(ngx.ERR, "WARNING: Error calling endpoint " .. endpoint_name .. ": " .. err) -- non-fatal error
         return nil,err
     end
@@ -1021,8 +1020,7 @@ function keycloak.authorize()
 
     -- catch empty access token
     if session_token == nil then
-        -- TODO warn log level
-        ngx.log(ngx.ERR, "WARNING: Session token is nil: access forbidden.") -- non-fatal error
+        ngx.log(ngx.WARN, "WARNING: Session token is nil: access forbidden.") -- non-fatal error
         session:close()
         return ngx.HTTP_UNAUTHORIZED
     end
@@ -1039,8 +1037,7 @@ function keycloak.authorize()
     -- We are denying access to anything that doesn't match a resource in KeyCloak.
     -- forbidden if no matching resources found
     if resource_id == nil then
-        -- TODO warn log level
-        ngx.log(ngx.ERR, "WARNING: No matching resources: access forbidden.") -- non-fatal error
+        ngx.log(ngx.WARN, "WARNING: No matching resources: access forbidden.") -- non-fatal error
         session:close()
         return ngx.HTTP_FORBIDDEN
     end
@@ -1058,8 +1055,7 @@ function keycloak.authorize()
 
     -- return cached authorization result if present
     if session.data.authorized[resource_id] ~= nil then
-        -- TODO debug log level
-        ngx.log(ngx.ERR, "DEBUG: Found existing decision in session for resource id: " .. resource_id)
+        ngx.log(ngx.DEBUG, "DEBUG: Found existing decision in session for resource id: " .. resource_id)
         session:close()
         return session.data.authorized[resource_id]
     end
@@ -1080,8 +1076,7 @@ function keycloak.authorize()
         -- cache the result in the session data
         session.data.authorized[resource_id] = ngx.HTTP_FORBIDDEN
         session:close()
-        -- TODO warn log level
-        ngx.log(ngx.ERR, "WARNING: Keycloak returned authorization error: " .. cjson_s.encode(decision)) -- non-fatal error
+        ngx.log(ngx.WARN, "WARNING: Keycloak returned authorization error: " .. cjson_s.encode(decision)) -- non-fatal error
         return ngx.HTTP_FORBIDDEN
     end
     -- catch unknown Keycloak response
