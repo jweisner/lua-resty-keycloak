@@ -600,10 +600,12 @@ local function keycloak_resource(resource_id)
     if not resource then
         ngx.log(ngx.DEBUG, "DEBUG: cache miss fetching resource " .. resource_id)
         resource = keycloak_get_resource(resource_id)
-        keycloak_cache_set("keycloak_resource", resource_id, resource, keycloak_cache_expiry["keycloak_resource"])
     end
 
-    if not resource or not type(resource == "table") then
+    -- sanity check on resource before caching
+    if resource and (type(resource) == "table") then
+        keycloak_cache_set("keycloak_resource", resource_id, resource, keycloak_cache_expiry["keycloak_resource"])
+    else
         ngx.log(ngx.ERR, "Unable to fetch " .. resource_id)
         resource = nil
     end
