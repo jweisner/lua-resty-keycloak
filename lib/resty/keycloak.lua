@@ -187,17 +187,26 @@ local function keycloak_cache_set(dictname, key, value, exp)
     -- TODO redis integration
     local nginxdict = ngx.shared[dictname]
 
+    -- invalid or unset Nginx dict
     if not nginxdict then
         ngx.log(ngx.WARN, "WARNING: Missing Nginx lua_shared_dict " .. dictname)
+        return false
     end
 
-    if nginxdict and (exp > 0) then
-        local success, err, forcible = nginxdict:set(key, keycloak_serialize(value), exp)
+    -- invalidate the cache on zero expiry
+    if exp == 0 then
+        ngx.log(ngx.DEBUG, "Received zero expiry, invalidating dict: " .. dictname)
+        keycloak_cache_invalidate(dictname)
+        return true
+    end
+
+    local success, err, forcible = nginxdict:set(key, keycloak_serialize(value), exp)
+    if err then
+        ngx.log(ngx.ERR, "Nginx dict rejected incompatible data: " .. tostring(value))
+        ngx.log(ngx.DEBUG, "Nginx rejected data. Flushing dict: " .. dictname)
+        keycloak_cache_invalidate(dictname)
+    else
         ngx.log(ngx.DEBUG, "DEBUG: cache set: success=", success, " err=", err, " forcible=", forcible)
-        if err then
-            -- TODO warn log level
-            ngx.log(ngx.WARN, "WARNING: nginx cache rejected incompatible data: " .. tostring(value))
-        end
     end
 end
 
@@ -549,7 +558,13 @@ local function keycloak_get_resource_set()
     local params            = {}
     local resource_set,err  = keycloak_call_endpoint(endpoint_type, endpoint_name, headers, body, params, method)
 
-    -- TODO handle err
+    -- handle err
+    if err ~= nil then
+        keycloak_cache_invalidate("keycloak_resource_set")
+        ngx.status = 500
+        ngx.log(ngx.ERR, "Error getting resource_set: " .. err)
+        ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
+    end
 
     return resource_set
 end
@@ -559,10 +574,10 @@ local function keycloak_resource_set()
 
     if not resource_set then
         resource_set = keycloak_get_resource_set()
-        keycloak_cache_set("keycloak_resource_set", "resource_set", resource_set, keycloak_cache_expiry["keycloak_resource_set"])
     end
 
     assert(type(resource_set) == "table")
+    keycloak_cache_set("keycloak_resource_set", "resource_set", resource_set, keycloak_cache_expiry["keycloak_resource_set"])
     return resource_set
 end
 
@@ -575,7 +590,12 @@ local function keycloak_get_resource(resource_id)
     local method        = "GET"
     local resource,err  = keycloak_call_endpoint(endpoint_type, endpoint_name, headers, body, params, method)
 
-    -- TODO handle err
+    -- Handle error from call_endpoint
+    -- NOTE: this is not a fatal error, but needs to be properly handled by the callee
+    if err ~= nil then
+        ngx.log(ngx.ERR, "Error fetching resource " .. resource_id .. " from Keycloak: " .. err)
+        resource = nil
+    end
 
     return resource
 end
@@ -583,37 +603,69 @@ end
 local function keycloak_resource(resource_id)
     assert(type(resource_id) == "string")
 
+    -- attempt to retrieve resource from Nginx cache
     local resource = keycloak_cache_get("keycloak_resource", resource_id)
 
+    -- retrieve resource from KeyCloak
     if not resource then
         ngx.log(ngx.DEBUG, "DEBUG: cache miss fetching resource " .. resource_id)
         resource = keycloak_get_resource(resource_id)
-        keycloak_cache_set("keycloak_resource", resource_id, resource, keycloak_cache_expiry["keycloak_resource"])
     end
 
-    assert(type(resource) == "table")
+    -- sanity check on resource before caching
+    if resource and (type(resource) == "table") then
+        keycloak_cache_set("keycloak_resource", resource_id, resource, keycloak_cache_expiry["keycloak_resource"])
+    else
+        ngx.log(ngx.ERR, "Unable to fetch " .. resource_id)
+        resource = nil
+    end
 
     return resource
 end
 
-local function keycloak_get_resources()
-    local resource_set = keycloak_resource_set()
-    local resources    = {}
-    local count        = 0
+local function keycloak_get_resources(fail_on_error)
+    local fail_on_error = fail_on_error or false
+    assert(type(fail_on_error) == "boolean")
+    local resource_set  = keycloak_resource_set()
+    local resources     = {}
+    local count         = 0
+    local try_again     = false
 
     for k,resource_id in ipairs(resource_set) do
-        resources[resource_id] = keycloak_resource(resource_id)
-        count = count +1
+        local resource = keycloak_resource(resource_id)
+        if resource ~= nil then
+            resources[resource_id] = keycloak_resource(resource_id)
+            count = count +1
+        else
+            -- if the resource fails to fetch, try again
+            -- this is logged in keycloak_resource()
+            try_again = true
+            break
+        end
+    end
+
+    -- if we got an error fetching a resource, flush the caches and try again
+    if try_again and fail_on_error then
+        ngx.status = 500
+        ngx.log(ngx.ERR, "Failed to fetch resources")
+        ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
+    end
+
+    -- try again with a recursive call one last time
+    -- flush resource list and resource caches
+    if try_again and not fail_on_error then
+        keycloak_cache_invalidate("keycloak_resource_set")
+        keycloak_cache_invalidate("keycloak_resource")
+        resources,count = keycloak_get_resources(true) -- fail_on_error = true
     end
 
     return resources,count
 end
 
 local function keycloak_resources()
-    local resources,count = keycloak_get_resources()
-    assert(type(resources) == "table")
-
-    return resources,count
+    -- this is not cached because it is only pulling the details from cache or UMA2 endpoint
+    -- this is just a wrapper for keycloak_get_resources()
+    return keycloak_get_resources()
 end
 
 -- this global has to be declared here; after all of the required functions are defined, and before keycloak_openidc_opts()
@@ -712,10 +764,13 @@ end
 -- return the resource_id for the deepest match of uris for the given uri
 -- returns nil if none found
 local function keycloak_resourceid_for_request(request_uri,request_method)
-    local request_uri               = request_uri or ngx.var.request_uri
-    local request_method            = request_method or ngx.req.get_method()
+    local request_uri    = request_uri or ngx.var.request_uri
+    local request_method = request_method or ngx.req.get_method()
+    -- cache key is the request method plus the request uri
+    --   eg. GET/foo/bar.html
+    local cache_key      = ngx.md5(request_method .. request_uri) -- shared cache key
 
-    local cached_resourceid = keycloak_cache_get("keycloak_request_resourceid", ngx.md5(request_uri..request_method))
+    local cached_resourceid = keycloak_cache_get("keycloak_request_resourceid", cache_key)
     if cached_resourceid then
         return cached_resourceid
     end
@@ -729,7 +784,7 @@ local function keycloak_resourceid_for_request(request_uri,request_method)
 
     -- initialize "best match"
     local found_depth = 0
-    local found       = nil -- this will be replaced by the ID of the closest uri match
+    local found       = nil -- this will be replaced by the ID of the closest uri match. nil if none
 
     for resource_id,resource in pairs(resources) do
         local resource_name = tostring(resource.name)
@@ -779,7 +834,15 @@ local function keycloak_resourceid_for_request(request_uri,request_method)
         end
     end
 
-    keycloak_cache_set("keycloak_request_resourceid", ngx.md5(request_uri..request_method), found, keycloak_cache_expiry["keycloak_request_resourceid"])
+    -- found is the id of the clostest resource match
+    -- stop here if no matches were found
+    if found == nil then
+        ngx.log(ngx.DEBUG, "DEBUG: no resource matches for URI and method")
+        return nil
+    end
+
+    assert(type("found") == "string")
+    keycloak_cache_set("keycloak_request_resourceid", cache_key, found, keycloak_cache_expiry["keycloak_request_resourceid"])
     return found
 end
 
@@ -820,12 +883,22 @@ local function keycloak_resource_has_scope(resource_id, scope)
     assert(type(resource_id) == "string")
     assert(type(scope)       == "string")
 
-    local resource = keycloak_get_resource(resource_id)
+    local resource = keycloak_resource(resource_id)
+
+    -- if there is an error fetching a known resource ID, the UMA2 endpoint
+    -- may be down, or the resource may have been recently removed. The safest thing to
+    -- do here is flush the caches so other processes don't try to use it again if it
+    -- has been removed, and error out with an ISE. This way only one client
+    -- gets an error, and it should fix itself on a page refresh
     if resource == nil then
-        -- TODO warn log level
-        ngx.log(ngx.ERR, "WARNING: Resource id \"" .. resource_id .. "\" not found!") -- non-fatal error
-        return false
+        keycloak_cache_invalidate("keycloak_resource_set")
+        keycloak_cache_invalidate("keycloak_resource")
+        ngx.status = 500
+        ngx.log(ngx.ERR, "Resource id \"" .. resource_id .. "\" not found! Resource caches flushed.")
+        ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
     end
+
+    assert(type(resource) == "table")
 
     local resource_scopes = keycloak_resource_scope_hash_to_lookup_table(resource.resource_scopes)
     if resource_scopes[scope] == true then
@@ -902,6 +975,7 @@ function keycloak.service_account_token()
 
     if not sa_token then
         sa_token = keycloak_get_service_account_token()
+        assert(type(sa_token) == "string")
         keycloak_cache_set("keycloak_config", "sa_token", sa_token, keycloak_cache_expiry["keycloak_config"])
     end
 
