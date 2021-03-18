@@ -149,6 +149,7 @@ end
 
 -- serializes data for shared cache or kv store
 local function keycloak_serialize(data)
+    if data == nil then return data end -- only pack if there is data to pack
     return messagepack.pack(data)
 end
 
