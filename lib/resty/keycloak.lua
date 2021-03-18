@@ -294,8 +294,6 @@ local function keycloak_export_attributes(token_attributes)
         ngx.var[value] = token_attributes[key] or "-"
     end
 
-    ngx.log(ngx.DEBUG, "DEBUG: attribute username:" .. token_attributes["username"] .. " ngx.var[oid_username]: " .. ngx.var.oid_username)
-
     -- "realm_roles" = join(',', realm_access['roles'])
     --     "realm_access": {
     --         "roles": [
