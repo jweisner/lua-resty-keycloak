@@ -631,6 +631,8 @@ local function keycloak_get_resources()
 end
 
 local function keycloak_resources()
+    -- this is not cached because it is only pulling the details from cache or UMA2 endpoint
+    -- this is just a wrapper for keycloak_get_resources()
     local resources,count = keycloak_get_resources()
     assert(type(resources) == "table")
 
