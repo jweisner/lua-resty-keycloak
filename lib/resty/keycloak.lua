@@ -1055,6 +1055,7 @@ function keycloak.authorize()
 
     -- set up authorization table in session if not present
     if session.data.authorized == nil then
+        -- TODO debug log level
         ngx.log(ngx.DEBUG, "DEBUG: No authorization table found in session data.")
         session.data.authorized = {}
     end
@@ -1063,7 +1064,8 @@ function keycloak.authorize()
 
     -- return cached authorization result if present
     if session.data.authorized[resource_id] ~= nil then
-        ngx.log(ngx.DEBUG, "DEBUG: Found existing decision in session for resource id: " .. resource_id)
+        -- TODO debug log level
+        ngx.log(ngx.ERR, "DEBUG: Found existing decision in session for resource id: " .. resource_id)
         session:close()
         return session.data.authorized[resource_id]
     end
@@ -1096,8 +1098,9 @@ function keycloak.authorize()
         ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
     end
 
-    ngx.log(ngx.DEBUG, "DEBUG: Keycloak authorization successful resource_id: " .. resource_id)
-    ngx.log(ngx.DEBUG, "DEBUG: Setting HTTP_FORBIDDEN in session for resource_id: " .. resource_id)
+    -- TODO debug log level
+    ngx.log(ngx.ERR, "DEBUG: Keycloak authorization successful resource_id: " .. resource_id)
+    ngx.log(ngx.ERR, "DEBUG: Setting HTTP_FORBIDDEN in session for resource_id: " .. resource_id)
     -- cache the result in the session data
     session.data.authorized[resource_id] = ngx.HTTP_OK
     session:close()
