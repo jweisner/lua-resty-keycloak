@@ -954,6 +954,7 @@ function keycloak.service_account_token()
 
     if not sa_token then
         sa_token = keycloak_get_service_account_token()
+        assert(type(sa_token) == "string")
         keycloak_cache_set("keycloak_config", "sa_token", sa_token, keycloak_cache_expiry["keycloak_config"])
     end
 
