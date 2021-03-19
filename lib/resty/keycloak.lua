@@ -788,6 +788,7 @@ local function keycloak_resourceid_for_request(request_uri,request_method)
         local resource_name = tostring(resource.name)
         ngx.log(ngx.DEBUG, "DEBUG: Trying resource: \"" .. resource_name .. "\"")
 
+        -- BUG this is getting nil for resource.resource_scopes after 10 minutes idle
         local resource_scopes = keycloak_resource_scope_hash_to_lookup_table(resource.resource_scopes)
         -- search for any method scopes (scopes mapped to HTTP methods)
         -- if there are any associated method scopes, the request method must match
@@ -1141,6 +1142,7 @@ function keycloak.authorize_anonymous(anonymous_scope)
         return cache_result
     end
 
+    -- BUG this is failing after being idle for 10 minutes
     local resource_id = keycloak_resourceid_for_request()
 
     -- no resource found with matching URI, so defer to anonymous policy mode
