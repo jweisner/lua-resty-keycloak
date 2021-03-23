@@ -1068,7 +1068,8 @@ function keycloak.authorize()
     local token_attributes = keycloak_token_atttributes(session_token)
     keycloak_export_attributes(token_attributes)
 
-    ngx.log(ngx.DEBUG, "DEBUG: Matching URI with Keycloak resources")
+    -- TODO debug
+    ngx.log(ngx.ERR, "DEBUG: Matching URI with Keycloak resources")
     local resource_id = keycloak_resourceid_for_request()
 
     -- this defines the default policy for logged-in users.
@@ -1081,11 +1082,13 @@ function keycloak.authorize()
     end
 
     -- we have a resource match
-    ngx.log(ngx.DEBUG, "Matched resource ID: " .. resource_id)
+    -- TODO debug
+    ngx.log(ngx.ERR, "Matched resource ID: " .. resource_id)
 
     -- set up authorization table in session if not present
     if session.data.authorized == nil then
-        ngx.log(ngx.DEBUG, "DEBUG: No authorization table found in session data.")
+        -- TODO debug
+        ngx.log(ngx.ERR, "DEBUG: No authorization table found in session data.")
         session.data.authorized = {}
     end
 
@@ -1093,7 +1096,8 @@ function keycloak.authorize()
 
     -- return cached authorization result if present
     if session.data.authorized[resource_id] ~= nil then
-        ngx.log(ngx.DEBUG, "DEBUG: Found existing decision in session for resource id: " .. resource_id)
+        -- TODO debug
+        ngx.log(ngx.ERR, "DEBUG: Found existing decision in session for resource id: " .. resource_id)
         session:close()
         return session.data.authorized[resource_id]
     end
