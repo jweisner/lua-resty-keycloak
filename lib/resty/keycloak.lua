@@ -1009,10 +1009,8 @@ function keycloak.authenticate(openidc_opts)
     local opts                          = keycloak_openidc_opts(openidc_opts)
     local res, err, target_url, session = openidc.authenticate(opts)
 
-    -- close the session to clear locks
-    session:close()
-
     if err ~= nil then
+        session:close()
         ngx.status = 500
         ngx.log(ngx.ERR, "openidc.authenticate() returned error: " .. err)
         ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
