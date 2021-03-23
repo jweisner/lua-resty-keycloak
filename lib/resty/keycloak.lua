@@ -1016,6 +1016,17 @@ function keycloak.authenticate(openidc_opts)
         ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
     end
 
+    local session_token = session.data.access_token
+
+    -- TODO dedupe this routine
+    -- session_token is not null: check type
+    assert(type(session_token) == "string")
+    local token_attributes = keycloak_token_atttributes(session_token)
+    keycloak_export_attributes(token_attributes)
+
+    -- close the session to clear locks
+    session:close()
+
     return ngx.HTTP_OK
 end
 
