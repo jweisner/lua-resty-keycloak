@@ -1117,6 +1117,7 @@ function keycloak.authorize()
         ngx.log(ngx.DEBUG, "DEBUG: Setting HTTP_FORBIDDEN in session for resource_id: " .. resource_id)
         -- cache the result in the session data
         session.data.authorized[resource_id] = ngx.HTTP_FORBIDDEN
+        session:save()
         session:close()
         ngx.log(ngx.WARN, "WARNING: Keycloak returned authorization error: " .. cjson_s.encode(decision)) -- non-fatal error
         return ngx.HTTP_FORBIDDEN
@@ -1134,6 +1135,7 @@ function keycloak.authorize()
     ngx.log(ngx.ERR, "DEBUG: Setting HTTP_OK in session for resource_id: " .. resource_id)
     -- cache the result in the session data
     session.data.authorized[resource_id] = ngx.HTTP_OK
+    session:save()
     session:close()
     -- authz successful
     return ngx.HTTP_OK
