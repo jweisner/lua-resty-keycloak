@@ -1181,6 +1181,17 @@ function keycloak.authorize_anonymous(anonymous_scope)
     end
 end
 
+-- provides insight into the session data
+function keycloak.dump_session_data()
+    local session = r_session.open()
+
+    ngx.say("*** Session Data ***")
+    for k,v in pairs(session.data) do
+        ngx.say(k .. ": " .. cjson_s.encode(v))
+    end
+
+    session:close()
+end
 -----------
 -- Bless keycloak table as object
 keycloak.__index = keycloak
