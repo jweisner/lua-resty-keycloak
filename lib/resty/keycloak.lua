@@ -1152,6 +1152,14 @@ function keycloak.authorize_anonymous(anonymous_scope)
         return ngx.DECLINED
     end
 
+    local session = r_session.open()
+
+    if type(session.data.access_token) == "string" then
+        -- TODO implement this
+        -- if keycloak_verify_access_token(session.data.access_token) then
+        -- set the attribute vars for the logs
+    end
+
     local cache_result = keycloak_cache_get("keycloak_anonymous", ngx.md5(ngx.request_uri))
 
     if cache_result then
