@@ -1063,6 +1063,7 @@ function keycloak.authorize()
         return ngx.HTTP_UNAUTHORIZED
     end
 
+    -- TODO dedupe this routine
     -- session_token is not null: check type
     assert(type(session_token) == "string")
     local token_attributes = keycloak_token_atttributes(session_token)
