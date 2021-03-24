@@ -1098,7 +1098,7 @@ function keycloak.authorize()
     -- return cached authorization result if present
     if session.data.authorized[resource_id] ~= nil then
         -- TODO debug
-        ngx.log(ngx.ERR, "DEBUG: Found existing decision in session for resource id: " .. resource_id)
+        ngx.log(ngx.ERR, "DEBUG: Found existing decision (" .. session.data.authorized[resource_id] .. ") in session for resource id: " .. resource_id)
         session:close()
         return session.data.authorized[resource_id]
     end
