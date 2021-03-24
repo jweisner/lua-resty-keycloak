@@ -302,7 +302,7 @@ local function keycloak_export_attributes(token_attributes)
     --             "Current Employee"
     --         ]
     --     },
-    if type(token_attributes.realm_access.roles) == "table" then
+    if type(token_attributes.realm_access) == "table" and type(token_attributes.realm_access.roles) == "table" then
         ngx.var.oid_realm_roles = table.concat(token_attributes.realm_access.roles, ",")
     else
         ngx.var.oid_realm_roles = ""
