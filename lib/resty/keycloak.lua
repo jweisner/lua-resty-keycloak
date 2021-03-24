@@ -318,7 +318,7 @@ local function keycloak_export_attributes(token_attributes)
     --             ]
     --         }
     --     },
-    if type(token_attributes.resource_access.account.roles) == "table" then
+    if type(token_attributes.resource_access) == "table" and type(token_attributes.resource_access.account.roles) == "table" then
         ngx.var.oid_resource_roles = table.concat(token_attributes.resource_access.account.roles, ",")
     else
         ngx.var.oid_resource_roles = ""
