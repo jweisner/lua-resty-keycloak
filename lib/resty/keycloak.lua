@@ -581,10 +581,14 @@ local function keycloak_resource_set()
 
     if not resource_set then
         resource_set = keycloak_get_resource_set()
+        ngx.log(ngx.ERR, "Returning fetched resource set from endpoint: " .. cjson_s.encode(resource_set))
+        keycloak_cache_set("keycloak_resource_set", "resource_set", resource_set, keycloak_cache_expiry["keycloak_resource_set"])
+    else
+        -- TODO: debug
+        ngx.log(ngx.ERR, "Returning resource set from cache: " .. cjson_s.encode(resource_set))
     end
 
     assert(type(resource_set) == "table")
-    keycloak_cache_set("keycloak_resource_set", "resource_set", resource_set, keycloak_cache_expiry["keycloak_resource_set"])
     return resource_set
 end
 
