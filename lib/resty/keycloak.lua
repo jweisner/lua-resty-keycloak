@@ -63,6 +63,7 @@ local keycloak_caches = {
     "keycloak_request_resourceid",
     "keycloak_resource_set",
     "keycloak_resource",
+    "keycloak_service_account",
     -- add any other caches we use here
 }
 
@@ -74,6 +75,7 @@ keycloak_cache_expiry["keycloak_discovery"]          = 24 * 60 * 60
 keycloak_cache_expiry["keycloak_request_resourceid"] =      10 * 60
 keycloak_cache_expiry["keycloak_resource_set"]       =      30 * 60
 keycloak_cache_expiry["keycloak_resource"]           =      10 * 60
+keycloak_cache_expiry["keycloak_service_account"]    =      30 * 60
 
 -- Keycloak URIs for service discovery
 local keycloak_realm_discovery_endpoints = {
@@ -970,12 +972,12 @@ end
     returns the SA access token as a string
 --]]
 function keycloak.service_account_token()
-    local sa_token = keycloak_cache_get("keycloak_config", "sa_token")
+    local sa_token = keycloak_cache_get("keycloak_service_account", "access_token")
 
     if not sa_token then
         sa_token = keycloak_get_service_account_token()
         assert(type(sa_token) == "string")
-        keycloak_cache_set("keycloak_config", "sa_token", sa_token, keycloak_cache_expiry["keycloak_config"])
+        keycloak_cache_set("keycloak_service_account", "access_token", sa_token, keycloak_cache_expiry["keycloak_service_account"])
     end
 
     assert(type(sa_token) == "string")
