@@ -884,12 +884,24 @@ local function keycloak_get_service_account_token()
         ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
     end
 
-    -- make sure the response has an access token
-    if type(res.access_token) ~= "string" then
+    -- check for error message response
+    if res.error ~= nil then
         ngx.status = 500
-        ngx.log(ngx.ERR, "No SA access token in response")
+        ngx.log(ngx.ERR, "Error fetching service account token: " .. res.error .. " message: " .. tostring(res.error_message))
         ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
     end
+
+    -- sanity check on returned data
+    if (res.token_type == nil) or (res.token_type ~= "bearer") then
+        ngx.status = 500
+        ngx.log(ngx.ERR, "Token endpoint returned unexpected token type: " .. tostring(res.token_type))
+        ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
+    end
+    assert(type(res.access_token) == "string")
+    assert(type(res.expires_in) == "number")
+    assert(type(res.refresh_token) == "string")
+    assert(type(res.refresh_expires_in) == "number")
+
 
     return res.access_token
 end
