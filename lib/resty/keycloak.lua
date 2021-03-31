@@ -609,7 +609,8 @@ local function keycloak_resource(resource_id)
 
     -- retrieve resource from KeyCloak
     if not resource then
-        ngx.log(ngx.DEBUG, "DEBUG: cache miss fetching resource " .. resource_id)
+        -- TODO debug
+        ngx.log(ngx.ERR, "DEBUG: cache miss fetching resource " .. resource_id)
         resource = keycloak_get_resource(resource_id)
     end
 
@@ -781,7 +782,9 @@ local function keycloak_resourceid_for_request(request_uri,request_method)
 
     assert(type(resources) == "table")
 
-    ngx.log(ngx.DEBUG, "DEBUG: request_uri:" .. request_uri .. " request_method:" .. request_method .. " method_scope:" .. request_method_scope .. " resource count:" .. resources_count)
+    -- TODO debug
+    ngx.log(ngx.ERR, "DEBUG: request_uri:" .. request_uri .. " request_method:" .. request_method .. " method_scope:" .. request_method_scope .. " resource count:" .. resources_count)
+    ngx.log(ngx.ERR, "DEBUG: fetched resources: " .. cjson_s.encode(resources))
 
     -- initialize "best match"
     local found_depth = 0
@@ -1053,7 +1056,7 @@ function keycloak.authorize()
 
     if session.present == nil then
         session:close()
-        ngx.log(ngx.DEBUG, "DEBUG: No session present: access forbidden.")
+        ngx.log(ngx.log, "DEBUG: No session present: access forbidden.") -- TODO debug
         return ngx.HTTP_UNAUTHORIZED
     end
 
