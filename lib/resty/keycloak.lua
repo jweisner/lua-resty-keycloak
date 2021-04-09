@@ -77,6 +77,9 @@ keycloak_cache_expiry["keycloak_resource_set"]       =      30 * 60
 keycloak_cache_expiry["keycloak_resource"]           =      10 * 60
 keycloak_cache_expiry["keycloak_service_account"]    =      30 * 60
 
+-- minimum seconds remaining in token lifetime to attempt early renewal
+local keycloak_token_renewal_threshold =       2 * 60
+
 -- Keycloak URIs for service discovery
 local keycloak_realm_discovery_endpoints = {
     openid = ".well-known/openid-configuration",
