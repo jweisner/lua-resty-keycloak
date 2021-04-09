@@ -900,6 +900,7 @@ local function keycloak_get_service_account_token()
     assert(type(res.expires_in) == "number")
     assert(type(res.refresh_token) == "string")
     assert(type(res.refresh_expires_in) == "number")
+    -- assert(res["not-before-policy"] == 0) -- I don't know what this does
 
     return res
 end
