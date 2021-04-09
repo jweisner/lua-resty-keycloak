@@ -901,8 +901,7 @@ local function keycloak_get_service_account_token()
     assert(type(res.refresh_token) == "string")
     assert(type(res.refresh_expires_in) == "number")
 
-
-    return res.access_token
+    return res
 end
 
 local function keycloak_resource_has_scope(resource_id, scope)
@@ -1000,8 +999,8 @@ function keycloak.service_account_token()
     local sa_token = keycloak_cache_get("keycloak_service_account", "access_token")
 
     if not sa_token then
-        sa_token = keycloak_get_service_account_token()
-        assert(type(sa_token) == "string")
+        local sa_token_res = keycloak_get_service_account_token()
+        assert(type(sa_token_res) == "table")
         keycloak_cache_set("keycloak_service_account", "access_token", sa_token, keycloak_cache_expiry["keycloak_service_account"])
     end
 
