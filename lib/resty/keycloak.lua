@@ -584,8 +584,7 @@ local function keycloak_resource_set()
         ngx.log(ngx.ERR, "Returning fetched resource set from endpoint: " .. cjson_s.encode(resource_set))
         keycloak_cache_set("keycloak_resource_set", "resource_set", resource_set, keycloak_cache_expiry["keycloak_resource_set"])
     else
-        -- TODO: debug
-        ngx.log(ngx.ERR, "Returning resource set from cache: " .. cjson_s.encode(resource_set))
+        ngx.log(ngx.ERR, "Returning resource set from cache: " .. cjson_s.encode(resource_set)) -- TODO debug
     end
 
     assert(type(resource_set) == "table")
@@ -619,8 +618,7 @@ local function keycloak_resource(resource_id)
 
     -- retrieve resource from KeyCloak
     if not resource then
-        -- TODO debug
-        ngx.log(ngx.ERR, "DEBUG: cache miss fetching resource " .. resource_id)
+        ngx.log(ngx.ERR, "DEBUG: cache miss fetching resource " .. resource_id) -- TODO debug
         resource = keycloak_get_resource(resource_id)
     end
 
@@ -792,9 +790,8 @@ local function keycloak_resourceid_for_request(request_uri,request_method)
 
     assert(type(resources) == "table")
 
-    -- TODO debug
-    ngx.log(ngx.ERR, "DEBUG: request_uri:" .. request_uri .. " request_method:" .. request_method .. " method_scope:" .. request_method_scope .. " resource count:" .. resources_count)
-    ngx.log(ngx.ERR, "DEBUG: fetched resources: " .. cjson_s.encode(resources))
+    ngx.log(ngx.ERR, "DEBUG: request_uri:" .. request_uri .. " request_method:" .. request_method .. " method_scope:" .. request_method_scope .. " resource count:" .. resources_count) -- TODO debug
+    ngx.log(ngx.ERR, "DEBUG: fetched resources: " .. cjson_s.encode(resources)) -- TODO debug
 
     -- initialize "best match"
     local found_depth = 0
@@ -1099,8 +1096,7 @@ function keycloak.authorize()
     local token_attributes = keycloak_token_atttributes(session_token)
     keycloak_export_attributes(token_attributes)
 
-    -- TODO debug
-    ngx.log(ngx.ERR, "DEBUG: Matching URI with Keycloak resources")
+    ngx.log(ngx.ERR, "DEBUG: Matching URI with Keycloak resources") -- TODO debug
     local resource_id = keycloak_resourceid_for_request()
 
     -- this defines the default policy for logged-in users.
@@ -1113,13 +1109,11 @@ function keycloak.authorize()
     end
 
     -- we have a resource match
-    -- TODO debug
-    ngx.log(ngx.ERR, "Matched resource ID: " .. resource_id)
+    ngx.log(ngx.ERR, "Matched resource ID: " .. resource_id) -- TODO debug
 
     -- set up authorization table in session if not present
     if session.data.authorized == nil then
-        -- TODO debug
-        ngx.log(ngx.ERR, "DEBUG: No authorization table found in session data.")
+        ngx.log(ngx.ERR, "DEBUG: No authorization table found in session data.") -- TODO debug
         session.data.authorized = {}
     end
 
@@ -1127,8 +1121,7 @@ function keycloak.authorize()
 
     -- return cached authorization result if present
     if session.data.authorized[resource_id] ~= nil then
-        -- TODO debug
-        ngx.log(ngx.ERR, "DEBUG: Found existing decision (" .. session.data.authorized[resource_id] .. ") in session for resource id: " .. resource_id)
+        ngx.log(ngx.ERR, "DEBUG: Found existing decision (" .. session.data.authorized[resource_id] .. ") in session for resource id: " .. resource_id) -- TODO debug
         session:close()
         return session.data.authorized[resource_id]
     end
@@ -1161,9 +1154,8 @@ function keycloak.authorize()
         ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
     end
 
-    -- TODO debug log level
-    ngx.log(ngx.ERR, "DEBUG: Keycloak authorization successful resource_id: " .. resource_id)
-    ngx.log(ngx.ERR, "DEBUG: Setting HTTP_OK in session for resource_id: " .. resource_id)
+    ngx.log(ngx.ERR, "DEBUG: Keycloak authorization successful resource_id: " .. resource_id) -- TODO debug
+    ngx.log(ngx.ERR, "DEBUG: Setting HTTP_OK in session for resource_id: " .. resource_id) -- TODO debug
     -- cache the result in the session data
     session.data.authorized[resource_id] = ngx.HTTP_OK
     session:save()
