@@ -1087,6 +1087,8 @@ function keycloak.service_account_token()
     if not sa_token then
         local sa_token_res = keycloak_get_service_account_token()
         assert(type(sa_token_res) == "table")
+        -- TODO get the stuff out of sa_token_res
+        assert(nil)
         keycloak_cache_set("keycloak_service_account", "access_token", sa_token, keycloak_cache_expiry["keycloak_service_account"])
     end
 
