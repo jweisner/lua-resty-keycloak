@@ -1069,11 +1069,23 @@ end
 -- returns ngx.HTTP_FORBIDDEN (403) for unauthorized users
 -- stops execution on errors
 function keycloak.authorize()
-    if keycloak.authorize_anonymous() == ngx.HTTP_OK then
-        return ngx.HTTP_OK
+    local session = r_session.open()
+    local session_token = nil
+
+    if session.present then
+        session_token = session.data.access_token
     end
 
-    local session = r_session.open()
+    -- if there is a session and an access token present, try to set OID attributes
+    if session.present and (type(session_token) == "string") then
+        local token_attributes = keycloak_token_atttributes(session_token)
+        keycloak_export_attributes(token_attributes)
+    end
+
+    if keycloak.authorize_anonymous() == ngx.HTTP_OK then
+        session:close()
+        return ngx.HTTP_OK
+    end
 
     if session.present == nil then
         session:close()
@@ -1089,12 +1101,6 @@ function keycloak.authorize()
         session:close()
         return ngx.HTTP_UNAUTHORIZED
     end
-
-    -- TODO dedupe this routine
-    -- session_token is not null: check type
-    assert(type(session_token) == "string")
-    local token_attributes = keycloak_token_atttributes(session_token)
-    keycloak_export_attributes(token_attributes)
 
     ngx.log(ngx.ERR, "DEBUG: Matching URI with Keycloak resources") -- TODO debug
     local resource_id = keycloak_resourceid_for_request()
