@@ -993,6 +993,82 @@ local function keycloak_token_atttributes(access_token)
     return keycloak_token_introspect(access_token)
 end
 
+--[[
+    Fetch a new access token from a refresh token
+
+    refresh_token (string): a refresh token
+
+    returns new token resource table or nil
+
+    example return data:
+    {
+        access_token       = "access token as string",
+        expires_in         = 300,
+        refresh_token      = "refresh token as string",
+        refresh_expires_in = 1800,
+    }
+]]
+local function keycloak_refresh_token(refresh_token)
+    assert(type(refresh_token) == "string")
+
+    -- TODO call token endpoint with token refresh data
+end
+
+--[[
+    Refreshes an access token (service account or user) if it has expired or is within
+    keycloak_token_renewal_threshold seconds of expiry.
+
+    token     (string): access token to check
+    expires   (number): epoch time of expiry
+    r_token   (string): refresh token
+    r_expires (number): epoch time of refresh token expiry
+
+    returns validated access token or nil
+--]]
+local function keycloak_refresh_token_if_expired(token, expires, r_token, r_expires)
+    local expires   = expires
+    local r_expires = r_expires
+
+    if type(expires) ~= "number" then
+        expires = 0
+    end
+
+    if type(r_expires) ~= "number" then
+        r_expires = 0
+    end
+
+    -- abort if token sanity checks failed
+    -- there must be a token to renew, and it must have an expiry time
+    if (type(token) ~= "string") or (expires == 0) then
+        return nil
+    end
+
+    local current_time = ngx.time()
+
+    -- invalidate expired token
+    if not token or (current_time >= (expires - keycloak_token_renewal_threshold)) then
+        token = nil
+    end
+
+    -- if we still have a token here, it hasn't expired and is not nil
+    if type(token) == "string" then
+        return token
+    end
+
+    -- if refresh token is nil, or expired we can't renew
+    if not r_token or (current_time >= (r_expires - keycloak_token_renewal_threshold)) then
+        return nil
+    end
+
+    -- if we still have a refresh token, try to use it
+    if type(r_token) == "string" then
+        return keycloak_refresh_token(r_token)
+    end
+
+    -- refresh token failed
+    return nil
+end
+
 -----------
 -- Public Functions
 
@@ -1000,7 +1076,13 @@ end
     returns the SA access token as a string
 --]]
 function keycloak.service_account_token()
-    local sa_token = keycloak_cache_get("keycloak_service_account", "access_token")
+    local sa_token        = keycloak_cache_get("keycloak_service_account", "access_token")
+    local expires         = keycloak_cache_get("keycloak_service_account", "expires")
+    local refresh_token   = keycloak_cache_get("keycloak_service_account", "refresh_token")
+    local refresh_expires = keycloak_cache_get("keycloak_service_account", "refresh_expires")
+
+    -- TODO check sa_token expiry, refresh or renew
+    sa_token = keycloak_refresh_token_if_expired(sa_token, expires, refresh_token, refresh_expires)
 
     if not sa_token then
         local sa_token_res = keycloak_get_service_account_token()
