@@ -903,6 +903,55 @@ local function keycloak_validate_token_resource(token_res)
     return token_res,nil
 end
 
+--[[
+    Take the response data from a token endpoint request and copy the
+    data to a new table adding "expires_at" and "issued_at" epoch times
+
+    token_data (table): a response table from the OpenID token_endpoint
+
+    returns new table with "expires_at" values for token
+    and refresh token
+
+    example input data:
+    {
+        access_token       = "access token as string",
+        expires_in         = 300,
+        refresh_token      = "refresh token as string",
+        refresh_expires_in = 1800,
+        ...
+    }
+
+    example return data:
+    {
+        access_token       = "access token as string",
+        expires_in         = 300,
+        expires_at         = 1618419999,
+        issued_at          = 1618419699,
+        refresh_token      = "refresh token as string",
+        refresh_expires_in = 1800
+        refresh_expires_at = 1618421499,
+        ...
+    }
+]]
+local function keycloak_set_token_expiry(token_data, issued_at)
+    assert(type(token_data) == "table")
+    local issued_at = issued_at or ngx.time()
+
+    -- sanity check on token data
+    assert(type(token_data["access_token"])       == "string" )
+    assert(type(token_data["expires_in"])         == "number" )
+    assert(type(token_data["refresh_token"])      == "string" )
+    assert(type(token_data["refresh_expires_in"]) == "number" )
+
+    local current_time = ngx.time()
+
+    token_data["issued_at"]          = current_time
+    token_data["expires_at"]         = current_time + token_data["expires_in"]
+    token_data["refresh_expires_at"] = current_time + token_data["refresh_expires_in"]
+
+    return token_data
+end
+
     fetch the service account token from Keycloak for the resource server
     returns the service account data from the token endpoint
 --]]
