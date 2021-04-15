@@ -986,12 +986,23 @@ local function keycloak_get_service_account_token()
     end
 
     -- sanity check on returned data
+    res, err = keycloak_validate_token_resource(res)
+
+    if err then
         ngx.status = 500
-        ngx.log(ngx.ERR, "Token endpoint returned unexpected token type: " .. tostring(res.token_type))
+        ngx.log(ngx.ERR, "Error validating service account token data: " .. err)
         ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
     end
 
     if res.token_type ~= "bearer" then
+        ngx.status = 500
+        ngx.log(ngx.ERR, "Token endpoint returned unexpected token type: " .. tostring(res.token_type) .. "expecting \"bearer\" token.")
+        ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
+    end
+
+    -- add derived atttributes
+    res = keycloak_set_token_expiry(res, current_time)
+
     return res
 end
 
