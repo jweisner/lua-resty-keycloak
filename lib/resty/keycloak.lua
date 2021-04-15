@@ -991,11 +991,6 @@ local function keycloak_get_service_account_token()
         ngx.log(ngx.ERR, "Token endpoint returned unexpected token type: " .. tostring(res.token_type))
         ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
     end
-    assert(type(res.access_token) == "string")
-    assert(type(res.expires_in) == "number")
-    assert(type(res.refresh_token) == "string")
-    assert(type(res.refresh_expires_in) == "number")
-    -- assert(res["not-before-policy"] == 0) -- I don't know what this does
 
     return res
 end
