@@ -1081,6 +1081,29 @@ local function keycloak_token_attributes(access_token)
 end
 
 --[[
+    Evaluate the time remaining on a token using the renewal threshold
+
+    token (string): an access token
+    expiry (number): epoch time of token expiry
+    threshold (number): optional seconds remaining threshold for freshness test
+]]
+local function keycloak_token_is_fresh(expiry, threshold)
+    assert(type(expiry) == "number")
+    local threshold = threshold or keycloak_token_renewal_threshold
+    assert(type(threshold) == "number")
+
+    local seconds_remaining = expiry - threshold - ngx.time()
+
+    if seconds_remaining > 0 then
+        -- token time is still valid
+        return true
+    end
+
+    -- token is expired
+    return false
+end
+
+--[[
     Fetch a new access token from a refresh token
 
     refresh_token (string): a refresh token
