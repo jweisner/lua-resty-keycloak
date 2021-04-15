@@ -986,12 +986,12 @@ local function keycloak_get_service_account_token()
     end
 
     -- sanity check on returned data
-    if (res.token_type == nil) or (res.token_type ~= "bearer") then
         ngx.status = 500
         ngx.log(ngx.ERR, "Token endpoint returned unexpected token type: " .. tostring(res.token_type))
         ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
     end
 
+    if res.token_type ~= "bearer" then
     return res
 end
 
