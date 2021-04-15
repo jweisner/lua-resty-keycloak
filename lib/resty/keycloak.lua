@@ -1066,7 +1066,7 @@ end
 
     returns the token attributes as a table
 ]]
-local function keycloak_token_atttributes(access_token)
+local function keycloak_token_attributes(access_token)
     assert(type(access_token) == "string")
 
     local session = r_session.open()
@@ -1222,7 +1222,7 @@ function keycloak.authenticate(openidc_opts)
     -- TODO dedupe this routine
     -- session_token is not null: check type
     assert(type(session_token) == "string")
-    local token_attributes = keycloak_token_atttributes(session_token)
+    local token_attributes = keycloak_token_attributes(session_token)
     keycloak_export_attributes(token_attributes)
 
     -- close the session to clear locks
@@ -1252,7 +1252,7 @@ function keycloak.authorize()
 
     -- if there is a session and an access token present, try to set OID attributes
     if session.present and (type(session_token) == "string") then
-        local token_attributes = keycloak_token_atttributes(session_token)
+        local token_attributes = keycloak_token_attributes(session_token)
         keycloak_export_attributes(token_attributes)
     end
 
