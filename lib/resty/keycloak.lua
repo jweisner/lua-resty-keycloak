@@ -1376,11 +1376,14 @@ function keycloak.authorize_anonymous(anonymous_scope)
 
     local session = r_session.open()
 
-    if type(session.data.access_token) == "string" then
-        -- TODO implement this
-        -- if keycloak_verify_access_token(session.data.access_token) then
-        -- set the attribute vars for the logs
+    if session.present and type(session.data.access_token) == "string" then
+        keycloak_export_attributes()
+        -- TODO dedupe this routine
+        local token_attributes = keycloak_token_attributes(session.data.access_token)
+        keycloak_export_attributes(token_attributes)
     end
+
+    session:close()
 
     local cache_result = keycloak_cache_get("keycloak_anonymous", ngx.md5(ngx.request_uri))
 
