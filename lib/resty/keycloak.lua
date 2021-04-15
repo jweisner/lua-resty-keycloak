@@ -952,7 +952,9 @@ local function keycloak_set_token_expiry(token_data, issued_at)
     return token_data
 end
 
+--[[
     fetch the service account token from Keycloak for the resource server
+
     returns the service account data from the token endpoint
 --]]
 local function keycloak_get_service_account_token()
