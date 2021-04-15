@@ -862,9 +862,9 @@ local function keycloak_resourceid_for_request(request_uri,request_method)
 end
 
 --[[
-    fetch the service account token from Keycloak for the client application
 
-    returns the SA access token as a string
+    fetch the service account token from Keycloak for the resource server
+    returns the service account data from the token endpoint
 --]]
 local function keycloak_get_service_account_token()
     local endpoint_name = "token_endpoint"
