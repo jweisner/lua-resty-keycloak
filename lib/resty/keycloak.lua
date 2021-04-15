@@ -969,6 +969,7 @@ local function keycloak_get_service_account_token()
     }
 
     local res, err = keycloak_call_endpoint(endpoint_type, endpoint_name, {}, body)
+    local current_time = ngx.time()
 
     -- check for SA token error
     if err then
