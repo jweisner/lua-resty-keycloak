@@ -1164,17 +1164,12 @@ end
 function keycloak.service_account_token()
     local token_res, err     = {}, nil
     local attributes         = keycloak_token_res_attributes
-    local derived_attributes = keycloak_derived_token_res_attributes
     local renewal_threshold  = keycloak_token_renewal_threshold
     local cache_key          = "keycloak_service_account"
     local token_fresh        = false
 
     -- attempt to pull all service account token data from cache
     for i,k in ipairs(attributes) do
-        token_res[k] = keycloak_cache_get(cache_key, k)
-    end
-
-    for i,k in ipairs(derived_attributes) do
         token_res[k] = keycloak_cache_get(cache_key, k)
     end
 
