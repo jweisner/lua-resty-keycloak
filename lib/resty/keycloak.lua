@@ -862,6 +862,42 @@ local function keycloak_resourceid_for_request(request_uri,request_method)
 end
 
 --[[
+    Check if data returned from a call to the token endpoint appears to be
+    valid token data
+
+    token_res (any): data to evaluate
+
+    returns:
+        token_res: the data that was evaluated
+        err: an error message if the data appears invalid
+]]
+local function keycloak_validate_token_resource(token_res)
+    if type(token_res) ~= "table" then
+        return token_res, "Token resource is not a table"
+    end
+
+    if type(token_res["access_token"]) ~= "string" then
+        return token_res, "access_token missing"
+    end
+
+    if type(token_res["expires_in"]) ~= "number" then
+        return token_res, "expires_in missing"
+    end
+
+    if type(token_res["refresh_token"]) ~= "string" then
+        return token_res, "refresh_token missing"
+    end
+
+    if type(token_res["refresh_expires_in"]) ~= "number" then
+        return token_res, "refresh_expires_in missing"
+    end
+
+    if type(token_res["token_type"]) ~= "string" then
+        return token_res, "token_type missing"
+    end
+
+    return token_res,nil
+end
 
     fetch the service account token from Keycloak for the resource server
     returns the service account data from the token endpoint
