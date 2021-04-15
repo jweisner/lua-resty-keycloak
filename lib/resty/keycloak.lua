@@ -896,6 +896,10 @@ local function keycloak_validate_token_resource(token_res)
         return token_res, "token_type missing"
     end
 
+    if type(token_res["not-before-policy"]) ~= "number" then
+        return token_res, "not-before-policy missing or invalid"
+    end
+
     return token_res,nil
 end
 
