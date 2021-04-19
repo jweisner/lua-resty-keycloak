@@ -1410,7 +1410,7 @@ function keycloak.authorize_anonymous(anonymous_scope)
         elseif config["anonymous_policy_mode"] == "enforcing" then
             return ngx.HTTP_UNAUTHORIZED
         else -- invalid anonymous_policy_mode
-            ngx.log(ngx.ERR, "Unexpected anonymous_policy_mode: " .. tostring(config["anonymous_policy_mode"] == "enforcing")) -- fatal
+            ngx.log(ngx.ERR, "Unexpected anonymous_policy_mode: " .. tostring(config["anonymous_policy_mode"])) -- fatal
             return ngx.DECLINED
         end
     end
