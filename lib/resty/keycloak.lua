@@ -1293,11 +1293,6 @@ function keycloak.authorize()
         keycloak_export_attributes(token_attributes)
     end
 
-    if keycloak.authorize_anonymous() == ngx.HTTP_OK then
-        session:close()
-        return ngx.HTTP_OK
-    end
-
     if session.present == nil then
         session:close()
         ngx.log(ngx.log, "DEBUG: No session present: access forbidden.") -- TODO debug
