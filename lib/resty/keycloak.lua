@@ -1433,7 +1433,7 @@ function keycloak.authorize_anonymous(anonymous_scope)
         ngx.log(ngx.ERR, "DEBUG: found anonymous scope \"" .. tostring(anonymous_scope) .. "\" for resource_id: " .. tostring(resource_id) .. ": anonymous access granted.") -- TODO debug
         return ngx.HTTP_OK
     else
-        ngx.log(ngx.ERR, "DEBUG: anonymous scope not found: anonymous access denied.") -- TODO debug
+        ngx.log(ngx.ERR, "DEBUG: anonymous scope not found: anonymous access denied. Returning " .. ngx.HTTP_UNAUTHORIZED) -- TODO debug
         return ngx.HTTP_UNAUTHORIZED
     end
 end
