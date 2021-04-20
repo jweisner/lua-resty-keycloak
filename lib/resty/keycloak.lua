@@ -1236,6 +1236,10 @@ end
 function keycloak.authenticate(openidc_opts)
     local openidc_opts = openidc_opts or {}
 
+    -- ensure that this resource server has a valid service account access token
+    local service_account_token = keycloak.service_account_token()
+    assert(type(service_account_token) == "string", "Failed to retrieve service account access_token")
+
     local opts                          = keycloak_openidc_opts(openidc_opts)
     local res, err, target_url, session = openidc.authenticate(opts)
 
@@ -1274,6 +1278,10 @@ end
 function keycloak.authorize()
     local session = r_session.open()
     local session_token = nil
+
+    -- ensure that this resource server has a valid service account access token
+    local service_account_token = keycloak.service_account_token()
+    assert(type(service_account_token) == "string", "Failed to retrieve service account access_token")
 
     if session.present then
         session_token = session.data.access_token
@@ -1377,6 +1385,10 @@ end
 function keycloak.authorize_anonymous(anonymous_scope)
     local config = keycloak_config()
     local anonymous_scope = anonymous_scope or config["anonymous_scope"]
+
+    -- ensure that this resource server has a valid service account access token
+    local service_account_token = keycloak.service_account_token()
+    assert(type(service_account_token) == "string", "Failed to retrieve service account access_token")
 
     -- decline to make a decision if anonymous enforcing disabled
     if config["anonymous_policy_mode"] == "disabled" then
