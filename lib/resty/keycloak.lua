@@ -635,7 +635,7 @@ local function keycloak_resource(resource_id)
 
     -- retrieve resource from KeyCloak
     if not resource then
-        ngx.log(ngx.ERR, "DEBUG: cache miss fetching resource " .. resource_id) -- TODO debug
+        ngx.log(ngx.DEBUG, "DEBUG: cache miss fetching resource " .. resource_id)
         resource = keycloak_get_resource(resource_id)
     end
 
@@ -807,8 +807,8 @@ local function keycloak_resourceid_for_request(request_uri,request_method)
 
     assert(type(resources) == "table")
 
-    ngx.log(ngx.ERR, "DEBUG: request_uri:" .. request_uri .. " request_method:" .. request_method .. " method_scope:" .. request_method_scope .. " resource count:" .. resources_count) -- TODO debug
-    ngx.log(ngx.ERR, "DEBUG: fetched resources: " .. cjson_s.encode(resources)) -- TODO debug
+    ngx.log(ngx.DEBUG, "DEBUG: request_uri:" .. request_uri .. " request_method:" .. request_method .. " method_scope:" .. request_method_scope .. " resource count:" .. resources_count)
+    ngx.log(ngx.DEBUG, "DEBUG: fetched resources: " .. cjson_s.encode(resources))
 
     -- initialize "best match"
     local found_depth = 0
@@ -1192,7 +1192,7 @@ function keycloak.service_account_token()
 
     -- if the cache is missing or the data appears invalid; assume cache miss, destroy resource data
     if err then
-        ngx.log(ngx.ERR, "DEBUG: Cache miss on " .. cache_key .. ": " .. err) -- TODO debug
+        ngx.log(ngx.DEBUG, "DEBUG: Cache miss on " .. cache_key .. ": " .. err)
         token_res = {}
     end
 
