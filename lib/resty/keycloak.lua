@@ -1395,7 +1395,6 @@ function keycloak.authorize_anonymous(anonymous_scope)
     -- export session attributes if we have an existing session
     local session = r_session.open()
     if session.present and type(session.data.access_token) == "string" then
-        keycloak_export_attributes()
         -- TODO dedupe this routine
         local token_attributes = keycloak_token_attributes(session.data.access_token)
         keycloak_export_attributes(token_attributes)
