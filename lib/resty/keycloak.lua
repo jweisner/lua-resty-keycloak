@@ -1289,6 +1289,7 @@ function keycloak.authorize()
 
     -- if there is a session and an access token present, try to set OID attributes
     if session.present and (type(session_token) == "string") then
+        -- TODO dedupe this routine
         local token_attributes = keycloak_token_attributes(session_token)
         keycloak_export_attributes(token_attributes)
     end
