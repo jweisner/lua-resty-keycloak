@@ -1036,6 +1036,10 @@ end
 function keycloak.authenticate(openidc_opts)
     local openidc_opts = openidc_opts or {}
 
+    -- ensure that this resource server has a valid service account access token
+    local service_account_token = keycloak.service_account_token()
+    assert(type(service_account_token) == "string", "Failed to retrieve service account access_token")
+
     local opts                          = keycloak_openidc_opts(openidc_opts)
     local res, err, target_url, session = openidc.authenticate(opts)
 
