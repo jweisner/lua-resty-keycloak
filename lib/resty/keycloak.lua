@@ -1162,8 +1162,6 @@ local function keycloak_refresh_token(refresh_token)
     end
 
     assert(type(res) == "table", "Token endpoint returned invalid data for refresh token!")
-
-
 end
 
 -----------
