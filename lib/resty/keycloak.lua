@@ -798,6 +798,7 @@ local function keycloak_resourceid_for_request(request_uri,request_method)
     assert(type(resources) == "table")
 
     ngx.log(ngx.DEBUG, "DEBUG: request_uri:" .. request_uri .. " request_method:" .. request_method .. " method_scope:" .. request_method_scope .. " resource count:" .. resources_count)
+    ngx.log(ngx.DEBUG, "DEBUG: fetched resources: " .. cjson_s.encode(resources))
 
     -- initialize "best match"
     local found_depth = 0
