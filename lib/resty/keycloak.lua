@@ -1257,7 +1257,7 @@ function keycloak.authorize()
 
     if session.present == nil then
         session:close()
-        ngx.log(ngx.log, "DEBUG: No session present: access forbidden.") -- TODO debug
+        ngx.log(ngx.DEBUG, "DEBUG: No session present: access forbidden.")
         return ngx.HTTP_UNAUTHORIZED
     end
 
@@ -1283,11 +1283,11 @@ function keycloak.authorize()
     end
 
     -- we have a resource match
-    ngx.log(ngx.ERR, "Matched resource ID: " .. resource_id) -- TODO debug
+    ngx.log(ngx.DEBUG, "Matched resource ID: " .. resource_id)
 
     -- set up authorization table in session if not present
     if session.data.authorized == nil then
-        ngx.log(ngx.ERR, "DEBUG: No authorization table found in session data.") -- TODO debug
+        ngx.log(ngx.DEBUG, "DEBUG: No authorization table found in session data.")
         session.data.authorized = {}
     end
 
@@ -1295,7 +1295,7 @@ function keycloak.authorize()
 
     -- return cached authorization result if present
     if session.data.authorized[resource_id] ~= nil then
-        ngx.log(ngx.ERR, "DEBUG: Found existing decision (" .. session.data.authorized[resource_id] .. ") in session for resource id: " .. resource_id) -- TODO debug
+        ngx.log(ngx.DEBUG, "DEBUG: Found existing decision (" .. session.data.authorized[resource_id] .. ") in session for resource id: " .. resource_id)
         session:close()
         return session.data.authorized[resource_id]
     end
@@ -1376,10 +1376,10 @@ function keycloak.authorize_anonymous(anonymous_scope)
     -- no resource found with matching URI, so defer to anonymous policy mode
     if resource_id == nil then
         if config["anonymous_policy_mode"] == "permissive" then
-            ngx.log(ngx.ERR, "DEBUG: no resource found. Permissive policy. returning HTTP_OK") -- TODO debug
+            ngx.log(ngx.DEBUG, "DEBUG: no resource found. Permissive policy. returning HTTP_OK")
             return ngx.HTTP_OK
         elseif config["anonymous_policy_mode"] == "enforcing" then
-            ngx.log(ngx.ERR, "DEBUG: no resource found. Enforcing policy. returning HTTP_UNAUTHORIZED") -- TODO debug
+            ngx.log(ngx.DEBUG, "DEBUG: no resource found. Enforcing policy. returning HTTP_UNAUTHORIZED")
             return ngx.HTTP_UNAUTHORIZED
         else -- invalid anonymous_policy_mode
             ngx.log(ngx.ERR, "Unexpected anonymous_policy_mode: " .. tostring(config["anonymous_policy_mode"])) -- fatal
