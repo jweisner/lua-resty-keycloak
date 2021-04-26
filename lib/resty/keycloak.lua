@@ -583,6 +583,12 @@ local function keycloak_get_resource_set()
         ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
     end
 
+    -- if the service account token is not valid, the endpoint returns an error as a JSON response, but err is nil
+    if resource_set["error"] ~= nil then
+        keycloak_cache_invalidate("keycloak_resource_set")
+        keycloak_cache_invalidate("keycloak_service_account")
+    end
+
     return resource_set
 end
 
@@ -591,10 +597,13 @@ local function keycloak_resource_set()
 
     if not resource_set then
         resource_set = keycloak_get_resource_set()
+        ngx.log(ngx.ERR, "Returning fetched resource set from endpoint: " .. cjson_s.encode(resource_set))
+        keycloak_cache_set("keycloak_resource_set", "resource_set", resource_set, keycloak_cache_expiry["keycloak_resource_set"])
+    else
+        ngx.log(ngx.DEBUG, "Returning resource set from cache: " .. cjson_s.encode(resource_set))
     end
 
     assert(type(resource_set) == "table")
-    keycloak_cache_set("keycloak_resource_set", "resource_set", resource_set, keycloak_cache_expiry["keycloak_resource_set"])
     return resource_set
 end
 
