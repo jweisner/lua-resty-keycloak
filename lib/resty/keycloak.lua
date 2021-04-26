@@ -601,7 +601,7 @@ local function keycloak_resource_set()
         ngx.log(ngx.ERR, "Returning fetched resource set from endpoint: " .. cjson_s.encode(resource_set))
         keycloak_cache_set("keycloak_resource_set", "resource_set", resource_set, keycloak_cache_expiry["keycloak_resource_set"])
     else
-        ngx.log(ngx.ERR, "Returning resource set from cache: " .. cjson_s.encode(resource_set)) -- TODO debug
+        ngx.log(ngx.DEBUG, "Returning resource set from cache: " .. cjson_s.encode(resource_set))
     end
 
     assert(type(resource_set) == "table")
@@ -1271,7 +1271,7 @@ function keycloak.authorize()
         return ngx.HTTP_UNAUTHORIZED
     end
 
-    ngx.log(ngx.ERR, "DEBUG: Matching URI with Keycloak resources") -- TODO debug
+    ngx.log(ngx.DEBUG, "DEBUG: Matching URI with Keycloak resources")
     local resource_id = keycloak_resourceid_for_request()
 
     -- this defines the default policy for logged-in users.
@@ -1329,8 +1329,8 @@ function keycloak.authorize()
         ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
     end
 
-    ngx.log(ngx.ERR, "DEBUG: Keycloak authorization successful resource_id: " .. resource_id) -- TODO debug
-    ngx.log(ngx.ERR, "DEBUG: Setting HTTP_OK in session for resource_id: " .. resource_id) -- TODO debug
+    ngx.log(ngx.DEBUG, "DEBUG: Keycloak authorization successful resource_id: " .. resource_id)
+    ngx.log(ngx.DEBUG, "DEBUG: Setting HTTP_OK in session for resource_id: " .. resource_id)
     -- cache the result in the session data
     session.data.authorized[resource_id] = ngx.HTTP_OK
     session:save()
@@ -1350,7 +1350,7 @@ function keycloak.authorize_anonymous(anonymous_scope)
 
     -- decline to make a decision if anonymous enforcing disabled
     if config["anonymous_policy_mode"] == "disabled" then
-        ngx.log(ngx.ERR, "DEBUG: anonymous mode disabled") -- TODO debug
+        ngx.log(ngx.DEBUG, "DEBUG: anonymous mode disabled")
         return ngx.DECLINED
     end
 
@@ -1390,10 +1390,10 @@ function keycloak.authorize_anonymous(anonymous_scope)
 
     -- policy server has a resource ID that matches the request
     if keycloak_resource_has_scope(resource_id,anonymous_scope) == true then
-        ngx.log(ngx.ERR, "DEBUG: found anonymous scope \"" .. tostring(anonymous_scope) .. "\" for resource_id: " .. tostring(resource_id) .. ": anonymous access granted.") -- TODO debug
+        ngx.log(ngx.DEBUG, "DEBUG: found anonymous scope \"" .. tostring(anonymous_scope) .. "\" for resource_id: " .. tostring(resource_id) .. ": anonymous access granted.")
         return ngx.HTTP_OK
     else
-        ngx.log(ngx.ERR, "DEBUG: anonymous scope not found: anonymous access denied. Returning " .. ngx.HTTP_UNAUTHORIZED) -- TODO debug
+        ngx.log(ngx.DEBUG, "DEBUG: anonymous scope not found: anonymous access denied. Returning " .. ngx.HTTP_UNAUTHORIZED)
         return ngx.HTTP_UNAUTHORIZED
     end
 end
