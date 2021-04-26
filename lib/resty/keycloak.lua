@@ -1067,8 +1067,6 @@ end
 -- returns ngx.HTTP_FORBIDDEN (403) for unauthorized users
 -- stops execution on errors
 function keycloak.authorize()
-    if keycloak.authorize_anonymous() == ngx.HTTP_OK then
-        return ngx.HTTP_OK
     end
 
     local session = r_session.open()
