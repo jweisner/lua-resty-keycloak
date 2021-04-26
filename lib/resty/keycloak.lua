@@ -60,9 +60,9 @@ local keycloak_caches = {
     "keycloak_anonymous",
     "keycloak_config",
     "keycloak_discovery",
+    "keycloak_request_resourceid",
     "keycloak_resource_set",
     "keycloak_resource",
-    "keycloak_request_resourceid",
     -- add any other caches we use here
 }
 
