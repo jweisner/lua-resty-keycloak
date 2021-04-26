@@ -818,7 +818,6 @@ local function keycloak_resourceid_for_request(request_uri,request_method)
         local resource_name = tostring(resource.name)
         ngx.log(ngx.DEBUG, "DEBUG: Trying resource: \"" .. resource_name .. "\"")
 
-        -- BUG this is getting nil for resource.resource_scopes after 10 minutes idle
         local resource_scopes = keycloak_resource_scope_hash_to_lookup_table(resource.resource_scopes)
         -- search for any method scopes (scopes mapped to HTTP methods)
         -- if there are any associated method scopes, the request method must match
