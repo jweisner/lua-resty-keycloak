@@ -286,6 +286,7 @@ end
 
 --[[
     Clear all Nginx exported variables
+    This will be called by the cache flush callback, not implemented yet
 ]]
 local function keycloak_clear_export_attributes()
     local config = keycloak_config()
