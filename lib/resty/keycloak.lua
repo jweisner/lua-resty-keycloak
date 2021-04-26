@@ -979,7 +979,7 @@ end
 
     returns the token attributes as a table
 ]]
-local function keycloak_token_atttributes(access_token)
+local function keycloak_token_attributes(access_token)
     assert(type(access_token) == "string")
 
     local session = r_session.open()
