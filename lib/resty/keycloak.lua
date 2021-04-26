@@ -874,9 +874,100 @@ local function keycloak_resourceid_for_request(request_uri,request_method)
 end
 
 --[[
-    fetch the service account token from Keycloak for the client application
+    Check if data returned from a call to the token endpoint appears to be
+    valid token data
 
-    returns the SA access token as a string
+    token_res (any): data to evaluate
+
+    returns:
+        token_res: the data that was evaluated
+        err: an error message if the data appears invalid
+]]
+local function keycloak_validate_token_resource(token_res)
+    if type(token_res) ~= "table" then
+        return token_res, "Token resource is not a table"
+    end
+
+    if type(token_res["access_token"]) ~= "string" then
+        return token_res, "access_token missing"
+    end
+
+    if type(token_res["expires_in"]) ~= "number" then
+        return token_res, "expires_in missing"
+    end
+
+    if type(token_res["refresh_token"]) ~= "string" then
+        return token_res, "refresh_token missing"
+    end
+
+    if type(token_res["refresh_expires_in"]) ~= "number" then
+        return token_res, "refresh_expires_in missing"
+    end
+
+    if type(token_res["token_type"]) ~= "string" then
+        return token_res, "token_type missing"
+    end
+
+    if type(token_res["not-before-policy"]) ~= "number" then
+        return token_res, "not-before-policy missing or invalid"
+    end
+
+    return token_res,nil
+end
+
+--[[
+    Take the response data from a token endpoint request and copy the
+    data to a new table adding "expires_at" and "issued_at" epoch times
+
+    token_data (table): a response table from the OpenID token_endpoint
+
+    returns new table with "expires_at" values for token
+    and refresh token
+
+    example input data:
+    {
+        access_token       = "access token as string",
+        expires_in         = 300,
+        refresh_token      = "refresh token as string",
+        refresh_expires_in = 1800,
+        ...
+    }
+
+    example return data:
+    {
+        access_token       = "access token as string",
+        expires_in         = 300,
+        expires_at         = 1618419999,
+        issued_at          = 1618419699,
+        refresh_token      = "refresh token as string",
+        refresh_expires_in = 1800
+        refresh_expires_at = 1618421499,
+        ...
+    }
+]]
+local function keycloak_set_token_expiry(token_data, issued_at)
+    assert(type(token_data) == "table")
+    local issued_at = issued_at or ngx.time()
+
+    -- sanity check on token data
+    assert(type(token_data["access_token"])       == "string" )
+    assert(type(token_data["expires_in"])         == "number" )
+    assert(type(token_data["refresh_token"])      == "string" )
+    assert(type(token_data["refresh_expires_in"]) == "number" )
+
+    local current_time = ngx.time()
+
+    token_data["issued_at"]          = current_time
+    token_data["expires_at"]         = current_time + token_data["expires_in"]
+    token_data["refresh_expires_at"] = current_time + token_data["refresh_expires_in"]
+
+    return token_data
+end
+
+--[[
+    fetch the service account token from Keycloak for the resource server
+
+    returns the service account data from the token endpoint
 --]]
 local function keycloak_get_service_account_token()
     local endpoint_name = "token_endpoint"
@@ -890,6 +981,7 @@ local function keycloak_get_service_account_token()
     }
 
     local res, err = keycloak_call_endpoint(endpoint_type, endpoint_name, {}, body)
+    local current_time = ngx.time()
 
     -- check for SA token error
     if err then
@@ -898,14 +990,32 @@ local function keycloak_get_service_account_token()
         ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
     end
 
-    -- make sure the response has an access token
-    if type(res.access_token) ~= "string" then
+    -- check for error message response
+    if res.error ~= nil then
         ngx.status = 500
-        ngx.log(ngx.ERR, "No SA access token in response")
+        ngx.log(ngx.ERR, "Error fetching service account token: " .. res.error .. " message: " .. tostring(res.error_message))
         ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
     end
 
-    return res.access_token
+    -- sanity check on returned data
+    res, err = keycloak_validate_token_resource(res)
+
+    if err then
+        ngx.status = 500
+        ngx.log(ngx.ERR, "Error validating service account token data: " .. err)
+        ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
+    end
+
+    if res.token_type ~= "bearer" then
+        ngx.status = 500
+        ngx.log(ngx.ERR, "Token endpoint returned unexpected token type: " .. tostring(res.token_type) .. "expecting \"bearer\" token.")
+        ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
+    end
+
+    -- add derived atttributes
+    res = keycloak_set_token_expiry(res, current_time)
+
+    return res
 end
 
 local function keycloak_resource_has_scope(resource_id, scope)
@@ -993,24 +1103,74 @@ local function keycloak_token_attributes(access_token)
     return keycloak_token_introspect(access_token)
 end
 
+--[[
+    Evaluate the time remaining on a token using the renewal threshold
+
+    token (string): an access token
+    expiry (number): epoch time of token expiry
+    threshold (number): optional seconds remaining threshold for freshness test
+]]
+local function keycloak_token_is_fresh(expiry, threshold)
+    assert(type(expiry) == "number")
+    local threshold = threshold or keycloak_token_renewal_threshold
+    assert(type(threshold) == "number")
+
+    local seconds_remaining = expiry - threshold - ngx.time()
+
+    if seconds_remaining > 0 then
+        -- token time is still valid
+        return true
+    end
+
+    -- token is expired
+    return false
+end
+
 -----------
 -- Public Functions
 
 --[[
     returns the SA access token as a string
+
+    - if the token needs to be refreshed, refresh the token
+    - if the token can't be refreshed, get a new one from SA credentials
 --]]
 function keycloak.service_account_token()
-    local sa_token = keycloak_cache_get("keycloak_config", "sa_token")
+    local token_res, err     = {}, nil
+    local attributes         = keycloak_token_res_attributes
+    local renewal_threshold  = keycloak_token_renewal_threshold
+    local cache_key          = "keycloak_service_account"
+    local token_fresh        = false
 
-    if not sa_token then
-        sa_token = keycloak_get_service_account_token()
-        assert(type(sa_token) == "string")
-        keycloak_cache_set("keycloak_config", "sa_token", sa_token, keycloak_cache_expiry["keycloak_config"])
+    -- attempt to pull all service account token data from cache
+    for i,k in ipairs(attributes) do
+        token_res[k] = keycloak_cache_get(cache_key, k)
     end
 
-    assert(type(sa_token) == "string")
+    -- check for valid cache data
+    token_res, err = keycloak_validate_token_resource(token_res)
 
-    return sa_token
+    -- if the cache is missing or the data appears invalid; assume cache miss, destroy resource data
+    if err then
+        ngx.log(ngx.DEBUG, "DEBUG: Cache miss on " .. cache_key .. ": " .. err)
+        token_res = {}
+    end
+
+    -- if we have expires_at, check freshness
+    if (err == nil) and (type(token_res) == "table") and (type(token_res["expires_at"]) == "number") then
+        token_fresh = keycloak_token_is_fresh(token_res["expires_at"])
+    end
+
+    -- fetch and store new contents if empty or expired
+    if err or (token_fresh ~= true) then
+        token_res = keycloak_get_service_account_token()
+        -- store cached service account data
+        for k,v in pairs(token_res) do
+            keycloak_cache_set(cache_key, k, v, (token_res["expires_in"] - renewal_threshold))
+        end
+    end
+
+    return token_res["access_token"]
 end
 
 --[[
@@ -1043,14 +1203,23 @@ function keycloak.authenticate(openidc_opts)
     local opts                          = keycloak_openidc_opts(openidc_opts)
     local res, err, target_url, session = openidc.authenticate(opts)
 
-    -- close the session to clear locks
-    session:close()
-
     if err ~= nil then
+        session:close()
         ngx.status = 500
         ngx.log(ngx.ERR, "openidc.authenticate() returned error: " .. err)
         ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
     end
+
+    local session_token = session.data.access_token
+
+    -- TODO dedupe this routine
+    -- session_token is not null: check type
+    assert(type(session_token) == "string")
+    local token_attributes = keycloak_token_attributes(session_token)
+    keycloak_export_attributes(token_attributes)
+
+    -- close the session to clear locks
+    session:close()
 
     return ngx.HTTP_OK
 end
@@ -1067,9 +1236,23 @@ end
 -- returns ngx.HTTP_FORBIDDEN (403) for unauthorized users
 -- stops execution on errors
 function keycloak.authorize()
+    local session = r_session.open()
+    local session_token = nil
+
+    -- ensure that this resource server has a valid service account access token
+    local service_account_token = keycloak.service_account_token()
+    assert(type(service_account_token) == "string", "Failed to retrieve service account access_token")
+
+    if session.present then
+        session_token = session.data.access_token
     end
 
-    local session = r_session.open()
+    -- if there is a session and an access token present, try to set OID attributes
+    if session.present and (type(session_token) == "string") then
+        -- TODO dedupe this routine
+        local token_attributes = keycloak_token_attributes(session_token)
+        keycloak_export_attributes(token_attributes)
+    end
 
     if session.present == nil then
         session:close()
@@ -1085,11 +1268,6 @@ function keycloak.authorize()
         session:close()
         return ngx.HTTP_UNAUTHORIZED
     end
-
-    -- session_token is not null: check type
-    assert(type(session_token) == "string")
-    local token_attributes = keycloak_token_atttributes(session_token)
-    keycloak_export_attributes(token_attributes)
 
     ngx.log(ngx.DEBUG, "DEBUG: Matching URI with Keycloak resources")
     local resource_id = keycloak_resourceid_for_request()
@@ -1116,7 +1294,7 @@ function keycloak.authorize()
 
     -- return cached authorization result if present
     if session.data.authorized[resource_id] ~= nil then
-        ngx.log(ngx.DEBUG, "DEBUG: Found existing decision in session for resource id: " .. resource_id)
+        ngx.log(ngx.DEBUG, "DEBUG: Found existing decision (" .. session.data.authorized[resource_id] .. ") in session for resource id: " .. resource_id)
         session:close()
         return session.data.authorized[resource_id]
     end
@@ -1164,15 +1342,32 @@ function keycloak.authorize_anonymous(anonymous_scope)
     local config = keycloak_config()
     local anonymous_scope = anonymous_scope or config["anonymous_scope"]
 
+    -- ensure that this resource server has a valid service account access token
+    local service_account_token = keycloak.service_account_token()
+    assert(type(service_account_token) == "string", "Failed to retrieve service account access_token")
+
     -- decline to make a decision if anonymous enforcing disabled
     if config["anonymous_policy_mode"] == "disabled" then
+        ngx.log(ngx.DEBUG, "DEBUG: anonymous mode disabled")
         return ngx.DECLINED
     end
+
+    -- export session attributes if we have an existing session
+    local session = r_session.open()
+    if session.present and type(session.data.access_token) == "string" then
+        -- TODO dedupe this routine
+        local token_attributes = keycloak_token_attributes(session.data.access_token)
+        keycloak_export_attributes(token_attributes)
+    end
+    session:close()
 
     local cache_result = keycloak_cache_get("keycloak_anonymous", ngx.md5(ngx.request_uri))
 
     if cache_result then
+        ngx.log(ngx.DEBUG, "DEBUG: returning cached anonymous result: " .. tostring(cache_result))
         return cache_result
+    else
+        ngx.log(ngx.DEBUG, "DEBUG: keycloak_anonymous cache miss")
     end
 
     local resource_id = keycloak_resourceid_for_request()
@@ -1180,24 +1375,38 @@ function keycloak.authorize_anonymous(anonymous_scope)
     -- no resource found with matching URI, so defer to anonymous policy mode
     if resource_id == nil then
         if config["anonymous_policy_mode"] == "permissive" then
+            ngx.log(ngx.DEBUG, "DEBUG: no resource found. Permissive policy. returning HTTP_OK")
             return ngx.HTTP_OK
         elseif config["anonymous_policy_mode"] == "enforcing" then
+            ngx.log(ngx.DEBUG, "DEBUG: no resource found. Enforcing policy. returning HTTP_UNAUTHORIZED")
             return ngx.HTTP_UNAUTHORIZED
         else -- invalid anonymous_policy_mode
-            ngx.log(ngx.ERR, "Unexpected anonymous_policy_mode: " .. tostring(config["anonymous_policy_mode"] == "enforcing")) -- fatal
+            ngx.log(ngx.ERR, "Unexpected anonymous_policy_mode: " .. tostring(config["anonymous_policy_mode"])) -- fatal
             return ngx.DECLINED
         end
     end
 
-    -- TODO look for existing session data in case we have data for logging
-
+    -- policy server has a resource ID that matches the request
     if keycloak_resource_has_scope(resource_id,anonymous_scope) == true then
+        ngx.log(ngx.DEBUG, "DEBUG: found anonymous scope \"" .. tostring(anonymous_scope) .. "\" for resource_id: " .. tostring(resource_id) .. ": anonymous access granted.")
         return ngx.HTTP_OK
     else
+        ngx.log(ngx.DEBUG, "DEBUG: anonymous scope not found: anonymous access denied. Returning " .. ngx.HTTP_UNAUTHORIZED)
         return ngx.HTTP_UNAUTHORIZED
     end
 end
 
+-- provides insight into the session data
+function keycloak.dump_session_data()
+    local session = r_session.open()
+
+    ngx.say("*** Session Data ***")
+    for k,v in pairs(session.data) do
+        ngx.say(k .. ": " .. cjson_s.encode(v))
+    end
+
+    session:close()
+end
 -----------
 -- Bless keycloak table as object
 keycloak.__index = keycloak
