@@ -305,7 +305,7 @@ end
     returns nothing
 ]]
 local function keycloak_export_attributes(token_attributes)
-    assert(type(token_attributes) == "table")
+    assert(type(token_attributes) == "table", "keycloak_export_attributes(): token_attributes: expected table, got " .. type(token_attributes))
 
     local config = keycloak_config()
 
