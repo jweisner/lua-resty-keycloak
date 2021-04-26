@@ -1148,9 +1148,8 @@ function keycloak.authorize()
         ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
     end
 
-    -- TODO debug log level
-    ngx.log(ngx.ERR, "DEBUG: Keycloak authorization successful resource_id: " .. resource_id)
-    ngx.log(ngx.ERR, "DEBUG: Setting HTTP_FORBIDDEN in session for resource_id: " .. resource_id)
+    ngx.log(ngx.DEBUG, "DEBUG: Keycloak authorization successful resource_id: " .. resource_id)
+    ngx.log(ngx.DEBUG, "DEBUG: Setting HTTP_OK in session for resource_id: " .. resource_id)
     -- cache the result in the session data
     session.data.authorized[resource_id] = ngx.HTTP_OK
     session:close()
