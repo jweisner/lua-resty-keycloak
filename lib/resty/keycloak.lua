@@ -1422,7 +1422,6 @@ function keycloak.authorize_anonymous(anonymous_scope)
             return ngx.HTTP_UNAUTHORIZED
         else -- invalid anonymous_policy_mode
             ngx.log(ngx.ERR, "Unexpected anonymous_policy_mode: " .. tostring(config["anonymous_policy_mode"])) -- fatal
-            ngx.log(ngx.ERR, "DEBUG: bad policy mode. returning DECLINED") -- TODO debug
             return ngx.DECLINED
         end
     end
