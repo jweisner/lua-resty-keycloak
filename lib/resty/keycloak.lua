@@ -63,6 +63,7 @@ local keycloak_caches = {
     "keycloak_request_resourceid",
     "keycloak_resource_set",
     "keycloak_resource",
+    "keycloak_service_account",
     -- add any other caches we use here
 }
 
