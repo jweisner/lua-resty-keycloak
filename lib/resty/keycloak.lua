@@ -109,6 +109,20 @@ local keycloak_http_timeouts = {
     read_timeout    = 5000,
 }
 
+-- attributes of a token resource returned from the token endpoint that we will cache
+local keycloak_token_res_attributes = {
+    "access_token",
+    "expires_in",
+    "refresh_expires_in",
+    "refresh_token",
+    "token_type",
+    "not-before-policy",
+    "scope",
+    "expires_at",
+    "refresh_expires_at",
+    "issued_at",
+}
+
 -----------
 -- Utility Functions
 
