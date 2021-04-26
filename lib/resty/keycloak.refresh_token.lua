@@ -14,6 +14,7 @@
         refresh_expires_in = 1800,
     }
 ]]
+--[[
 local function keycloak_refresh_token(refresh_token)
     assert(type(refresh_token) == "string")
 
@@ -34,3 +35,4 @@ local function keycloak_refresh_token(refresh_token)
 
     assert(type(res) == "table", "Token endpoint returned invalid data for refresh token!")
 end
+]]
