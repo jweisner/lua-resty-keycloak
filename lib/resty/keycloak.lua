@@ -1410,7 +1410,6 @@ function keycloak.authorize_anonymous(anonymous_scope)
         ngx.log(ngx.DEBUG, "DEBUG: keycloak_anonymous cache miss")
     end
 
-    -- BUG this is failing after being idle for 10 minutes
     local resource_id = keycloak_resourceid_for_request()
 
     -- no resource found with matching URI, so defer to anonymous policy mode
