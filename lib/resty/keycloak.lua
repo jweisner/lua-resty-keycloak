@@ -884,7 +884,9 @@ local function keycloak_get_service_account_token()
     local config        = keycloak_config()
 
     local body = {
-        grant_type = "client_credentials"
+        client_id     = config["client_id"],
+        client_secret = config["client_secret"],
+        grant_type    = "client_credentials",
     }
 
     local res, err = keycloak_call_endpoint(endpoint_type, endpoint_name, {}, body)
