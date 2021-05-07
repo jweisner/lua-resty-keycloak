@@ -76,6 +76,14 @@ keycloak_cache_expiry["keycloak_request_resourceid"] =      10 * 60
 keycloak_cache_expiry["keycloak_resource_set"]       =      30 * 60
 keycloak_cache_expiry["keycloak_resource"]           =      10 * 60
 
+local keycloak_redis_caches = {
+    "keycloak_anonymous",
+    "keycloak_discovery",
+    "keycloak_request_resourceid",
+    "keycloak_resource_set",
+    "keycloak_resource",
+}
+
 -- minimum seconds remaining in token lifetime to attempt early renewal
 local keycloak_token_renewal_threshold =       2 * 60
 
