@@ -76,6 +76,7 @@ keycloak_cache_expiry["keycloak_request_resourceid"] =      10 * 60
 keycloak_cache_expiry["keycloak_resource_set"]       =      30 * 60
 keycloak_cache_expiry["keycloak_resource"]           =      10 * 60
 
+-- these caches are eligible for sharing via Redis
 local keycloak_redis_caches = {
     "keycloak_anonymous",
     "keycloak_discovery",
