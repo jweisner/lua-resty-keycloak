@@ -1219,6 +1219,12 @@ function keycloak.authenticate(openidc_opts)
         ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
     end
 
+    if type(session) ~= "table" then
+        ngx.status = 500
+        ngx.log(ngx.ERR, "No valid session found. Check for errors in the resty.session driver.")
+        ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
+    end
+
     local session_token = session.data.access_token
 
     -- TODO dedupe this routine
